@@ -35,6 +35,8 @@
 *.i*86
 *.x86_64
 *.hex
+quickserv
+bin/*
 
 # Debug files
 *.dSYM/
@@ -50,3 +52,7 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# Vim temporary files
+*.swp
+*.swo
