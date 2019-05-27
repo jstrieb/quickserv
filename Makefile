@@ -8,7 +8,7 @@ VPATH = src
 
 
 # Main target
-quickserv: quickserv.c
+quickserv: helpers.c quickserv.c
 
 
 # Compile debug target with DEBUG flag enabled
