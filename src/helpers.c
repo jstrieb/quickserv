@@ -11,6 +11,8 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+#include "helpers.h"
+
 
 /******************************************************************************
  * Global Variables
@@ -67,4 +69,20 @@ void dbg_print(const char* fmt, ...) {
   vprintf(fmt, args);
 
   va_end(args);
+}
+
+
+
+/******************************************************************************
+ * Wrapper Functions
+ *****************************************************************************/
+
+/*
+ * Try to set a signal handler, and exit if it fails
+ */
+void Signal(int signum, sighandler_t handler) {
+  if (signal(signum, handler) == SIG_ERR) {
+    perror("signal");
+    fatal_error("Failed to set SIGINT handler\n");
+  }
 }
