@@ -20,4 +20,19 @@ debug: clean quickserv
 # Clean up generated binary
 .PHONY: clean
 clean:
-	rm -rf quickserv
+	rm -f quickserv
+
+
+# Install quickserv
+.PHONY: install
+install: quickserv
+	cp quickserv /usr/local/bin/quickserv
+
+
+# Uninstall (remove) quickserv
+.PHONY: uninstall
+uninstall:
+	rm -f /usr/local/bin/quickserv
+
+.PHONY: remove
+remove: uninstall
