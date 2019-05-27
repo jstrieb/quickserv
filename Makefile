@@ -3,7 +3,7 @@
 
 # Variables
 CC = gcc
-CFLAGS = -std=gnu99 -Wall -Werror -O2
+CFLAGS = -std=gnu99 -pedantic -Wall -Werror -O2
 VPATH = src
 
 
