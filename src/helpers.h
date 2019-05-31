@@ -22,6 +22,7 @@
 #define HELPERS_H
 
 #define BACKLOG 128
+#define MAXLINE 1024
 
 // Type definitions
 typedef void (*sighandler_t)(int);
@@ -41,5 +42,6 @@ void Setsockopt(int sockfd, int level, int optname, const void *optval,
     socklen_t optlen);
 void Close(int fd);
 void Listen(int fd, int backlog);
+int Accept(int sockfd);
 
 #endif /* HELPERS_H */

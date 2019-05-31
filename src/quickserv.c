@@ -83,5 +83,18 @@ int main(int argc, char *argv[]) {
   int listenfd = open_listenfd(PORT);
   ASSERT(listenfd >= 0);
 
+  // Accept connections until the user quits the program
+  while (1) {
+    // Accept a connection
+    int connfd = Accept(listenfd);
+    if (connfd < 0) continue;
+
+    // TODO: Process the request
+
+    // Close the accepted connection
+    print("Closing client connection\n");
+    Close(connfd);
+  }
+
   return 0;
 }

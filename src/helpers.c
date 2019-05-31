@@ -230,3 +230,35 @@ void Listen(int fd, int backlog) {
     fatal_error("Failed to listen on the file descriptor %d\n", fd);
   }
 }
+
+
+/*
+ * Accept a client connection and return a file descriptor to read/write
+ */
+int Accept(int sockfd) {
+  // Initialize data structure to hold address information
+  socklen_t clientlen = sizeof(struct sockaddr_storage);
+  struct sockaddr_storage client;
+
+  // Accept a connection
+  int result;
+  if ((result = accept(sockfd, (struct sockaddr *) &client, &clientlen)) < 0) {
+    perror("accept");
+  }
+
+  // Don't print info for invalid connections
+  if (result < 0) return result;
+
+  // Get and print information about the client connection
+  char client_name[MAXLINE], client_port[MAXLINE];
+  int err;
+  if ((err = getnameinfo((struct sockaddr *) &client, clientlen, client_name,
+          MAXLINE, client_port, MAXLINE, 0)) != 0) {
+    print("%s\n", gai_strerror(err));
+    return -1;
+  }
+
+  print("Client connected at %s:%s\n", client_name, client_port);
+
+  return result;
+}
