@@ -203,6 +203,8 @@ void Getaddrinfo(const char *node, const char *service, const struct addrinfo
  */
 void Setsockopt(int sockfd, int level, int optname, const void *optval,
     socklen_t optlen) {
+  REQUIRES(sockfd >= 0);
+
   if (setsockopt(sockfd, level, optname, optval, optlen) < 0) {
     perror("setsockopt");
     fatal_error("Failed to set socket options\n");
@@ -214,6 +216,8 @@ void Setsockopt(int sockfd, int level, int optname, const void *optval,
  * Close file descriptor
  */
 void Close(int fd) {
+  REQUIRES(fd >= 0);
+
   if (close(fd) < 0) {
     perror("close");
     fatal_error("Failed to close file descriptor %d\n", fd);
@@ -224,6 +228,8 @@ void Close(int fd) {
  * Listen on a file descriptor as a server
  */
 void Listen(int fd, int backlog) {
+  REQUIRES(fd >= 0);
+
   if (listen(fd, backlog) < 0) {
     Close(fd);
     perror("listen");
@@ -236,6 +242,8 @@ void Listen(int fd, int backlog) {
  * Accept a client connection and return a file descriptor to read/write
  */
 int Accept(int sockfd) {
+  REQUIRES(sockfd >= 0);
+
   // Initialize data structure to hold address information
   socklen_t clientlen = sizeof(struct sockaddr_storage);
   struct sockaddr_storage client;
@@ -248,6 +256,7 @@ int Accept(int sockfd) {
 
   // Don't print info for invalid connections
   if (result < 0) return result;
+  ASSERT(result >= 0);
 
   // Get and print information about the client connection
   char client_name[MAXLINE], client_port[MAXLINE];
@@ -260,5 +269,6 @@ int Accept(int sockfd) {
 
   print("Client connected at %s:%s\n", client_name, client_port);
 
+  ENSURES(result >= 0);
   return result;
 }

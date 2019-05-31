@@ -86,8 +86,8 @@ int main(int argc, char *argv[]) {
   // Accept connections until the user quits the program
   while (1) {
     // Accept a connection
-    int connfd = Accept(listenfd);
-    if (connfd < 0) continue;
+    int connfd;
+    if ((connfd = Accept(listenfd)) < 0) continue;
 
     // TODO: Process the request
 
