@@ -153,6 +153,8 @@ int open_listenfd(const char *port) {
 
   // If we've reached here without error, return the file descriptor
   dbg_print("Listening on port %s, bound to sockfd %d\n", port, sockfd);
+  print("Server running on port %s; it will run until this program exits\n"
+      "To connect, type http://localhost:%s/ into your browser\n", port, port);
 
   ENSURES(sockfd >= 0);
   return sockfd;

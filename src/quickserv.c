@@ -44,7 +44,9 @@ int verbose = 1;
  * exacerbate the risk of running what is already (probably) a vulnerable
  * program.
  */
-char *port = "42069";
+#ifndef PORT
+  #define PORT "42069"
+#endif
 
 
 
@@ -78,8 +80,8 @@ int main(int argc, char *argv[]) {
   Signal(SIGPIPE, SIG_IGN);
 
   // Open a socket listening on port 42069
-  int listenfd = open_listenfd(port);
-  (void)listenfd;
+  int listenfd = open_listenfd(PORT);
+  ASSERT(listenfd >= 0);
 
   return 0;
 }
