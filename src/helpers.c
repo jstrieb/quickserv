@@ -20,10 +20,11 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
-#include "helpers.h"
-
 // Use contracts if debugging is enabled
 #include "contracts.h"
+
+// Forward declarations
+#include "helpers.h"
 
 
 /******************************************************************************
@@ -180,9 +181,6 @@ void Signal(int signum, sighandler_t handler) {
 /*
  * Try to get an address info structure list, abort if it fails
  */
-/* void Getaddrinfo(const char *node, const char *service, struct addrinfo
-    *hints, struct addrinfo **res) {
-    */
 void Getaddrinfo(const char *node, const char *service, const struct addrinfo
     *hints, struct addrinfo **res) {
   REQUIRES(service != NULL && hints != NULL);

@@ -17,9 +17,9 @@
 #include <netdb.h>
 
 // Include guard so that this can only be included once
-#ifndef HELPERS_H
+#ifndef _HELPERS_H
 
-#define HELPERS_H
+#define _HELPERS_H
 
 #define BACKLOG 128
 #define MAXLINE 1024
@@ -44,4 +44,4 @@ void Close(int fd);
 void Listen(int fd, int backlog);
 int Accept(int sockfd);
 
-#endif /* HELPERS_H */
+#endif /* _HELPERS_H */

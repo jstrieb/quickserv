@@ -59,15 +59,15 @@ int verbose = 1;
  *****************************************************************************/
 
 /*
- * Handle Ctrl-c from the user cleanly
+ * Handle ctrl-c from the user cleanly
  */
 void sigint_handler(int sig) {
-  // Print a carraige return to overwrite the ugly-looking "^C" from the user
-  if (write(STDOUT_FILENO, "\r", 1) != 1) {
-    // No need to save and restore errno since the program is exiting
-    perror("write");
-  }
+  // NOTE: No need to save and restore errno since the program is exiting
+  // Print a carriage return to overwrite the ugly-looking "^C" from the user
+  if (write(STDOUT_FILENO, "\r", 1) != 1) perror("write");
   exit(EXIT_SUCCESS);
+
+  (void)sig;
 }
 
 
@@ -83,6 +83,8 @@ int main(int argc, char *argv[]) {
   Signal(SIGINT, sigint_handler);
   Signal(SIGPIPE, SIG_IGN);
 
+  // TODO: Find all of the executable files in the directory
+
   // Open a socket listening on port 42069
   int listenfd = open_listenfd(PORT);
   ASSERT(listenfd >= 0);
@@ -96,7 +98,7 @@ int main(int argc, char *argv[]) {
     // TODO: Process the request
 
     // Close the accepted connection
-    print("Closing client connection\n");
+    dbg_print("Closing client connection\n");
     Close(connfd);
   }
 
