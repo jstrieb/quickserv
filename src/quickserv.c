@@ -43,6 +43,10 @@ int verbose = 1;
  * but would make any users extremely vulnerable to attack. I see no need to
  * exacerbate the risk of running what is already (probably) a vulnerable
  * program.
+ *
+ * Advanced users can recompile with -DPORT=\"<some other port>\" and there is
+ * an undocumented make target to do this that can be found by reading the
+ * Makefile source.
  */
 #ifndef PORT
   #define PORT "42069"
