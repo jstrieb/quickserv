@@ -20,6 +20,10 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
+// Used for walking through the directory tree to show the user what will be
+// available on their server
+#include <ftw.h>
+
 // Use contracts if debugging is enabled
 #include "contracts.h"
 
@@ -82,6 +86,26 @@ void dbg_print(const char* fmt, ...) {
   vprintf(fmt, args);
 
   va_end(args);
+}
+
+
+/*
+ * Print a message informing the user of the current working directory so that
+ * they know where their files are being served from.
+ */
+void print_wd(void) {
+  char *wd;
+  // See the note in the DESCRIPTION section of the getwd man page for when buf
+  // is null and size is 0 in getcwd
+  if ((wd = getcwd(NULL, 0)) == NULL) {
+    perror("get_current_dir_name");
+    fatal_error("Failed to get current directory name.\n");
+  }
+  ASSERT(wd != NULL);
+
+  print("\nCurrently serving files from the following folder:\n%s/\n\n", wd);
+
+  free(wd);
 }
 
 
@@ -175,25 +199,6 @@ void Signal(int signum, sighandler_t handler) {
     perror("signal");
     fatal_error("Failed to set SIGINT handler\n");
   }
-}
-
-
-/*
- * Print a message informing the user of the current working directory so that
- * they know where their files are being served from.
- */
-void print_wd(void) {
-  char *wd;
-  // See the note in the DESCRIPTION section of the getwd man page
-  if ((wd = getcwd(NULL, 1024)) == NULL) {
-    perror("get_current_dir_name");
-    fatal_error("Failed to get current directory name.\n");
-  }
-  ASSERT(wd != NULL);
-
-  print("\nCurrently serving files from the following folder:\n%s/\n\n", wd);
-
-  free(wd);
 }
 
 

@@ -25,7 +25,7 @@
 // Both variables are set to maximum verbosity until command-line options to
 // control them are added
 int quiet = 0;
-int verbose = 0;
+int verbose = 1;
 
 /*
  * Developer's note:
