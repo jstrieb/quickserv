@@ -36,6 +36,7 @@ int open_listenfd(const char *port);
 
 // Wrapper functions
 void Signal(int signum, sighandler_t handler);
+void print_wd(void);
 void Getaddrinfo(const char *node, const char *service, const struct addrinfo
     *hints, struct addrinfo **res);
 void Setsockopt(int sockfd, int level, int optname, const void *optval,

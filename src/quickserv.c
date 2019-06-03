@@ -25,7 +25,7 @@
 // Both variables are set to maximum verbosity until command-line options to
 // control them are added
 int quiet = 0;
-int verbose = 1;
+int verbose = 0;
 
 /*
  * Developer's note:
@@ -82,6 +82,9 @@ int main(int argc, char *argv[]) {
   // Register signal handlers
   Signal(SIGINT, sigint_handler);
   Signal(SIGPIPE, SIG_IGN);
+
+  // Let the user know where we are
+  print_wd();
 
   // TODO: Find all of the executable files in the directory
 

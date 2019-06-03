@@ -155,7 +155,7 @@ int open_listenfd(const char *port) {
   // If we've reached here without error, return the file descriptor
   dbg_print("Listening on port %s, bound to sockfd %d\n", port, sockfd);
   print("Server running on port %s; it will run until this program exits\n"
-      "To connect, type http://localhost:%s/ into your browser\n", port, port);
+    "To connect, type http://localhost:%s/ into your browser\n\n", port, port);
 
   ENSURES(sockfd >= 0);
   return sockfd;
@@ -175,6 +175,25 @@ void Signal(int signum, sighandler_t handler) {
     perror("signal");
     fatal_error("Failed to set SIGINT handler\n");
   }
+}
+
+
+/*
+ * Print a message informing the user of the current working directory so that
+ * they know where their files are being served from.
+ */
+void print_wd(void) {
+  char *wd;
+  // See the note in the DESCRIPTION section of the getwd man page
+  if ((wd = getcwd(NULL, 1024)) == NULL) {
+    perror("get_current_dir_name");
+    fatal_error("Failed to get current directory name.\n");
+  }
+  ASSERT(wd != NULL);
+
+  print("\nCurrently serving files from the following folder:\n%s/\n\n", wd);
+
+  free(wd);
 }
 
 
