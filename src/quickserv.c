@@ -86,7 +86,8 @@ int main(int argc, char *argv[]) {
   // Let the user know where we are
   print_wd();
 
-  // TODO: Find all of the executable files in the directory
+  // Find all of the executable files in the directory
+  print_files();
 
   // Open a socket listening on port 42069
   int listenfd = open_listenfd(PORT);

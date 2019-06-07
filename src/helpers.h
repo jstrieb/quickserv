@@ -23,6 +23,7 @@
 
 #define BACKLOG 128
 #define MAXLINE 1024
+#define MAX_FILE_NUM 20
 
 // Type definitions
 typedef void (*sighandler_t)(int);
@@ -33,6 +34,7 @@ void print(const char* fmt, ...);
 void dbg_print(const char* fmt, ...);
 void print_wd(void);
 
+void print_files(void);
 int open_listenfd(const char *port);
 
 // Wrapper functions

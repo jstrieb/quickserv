@@ -110,8 +110,68 @@ void print_wd(void) {
 
 
 /*
+ * Callback used by ftw to print statically-served files
+ */
+int static_callback(const char *fpath, const struct stat *sb, int typeflag) {
+  REQUIRES(fpath != NULL && sb != NULL);
+
+  // See man 7 inode to read about permissions macros
+  if (typeflag == FTW_F && !(sb->st_mode & S_IXUSR)) {
+    print("%s\n", fpath);
+  }
+
+  return 0;
+}
+
+
+/*
+ * Callback used by ftw to print dynamically-served files that will be executed
+ * when accessed
+ */
+int dynamic_callback(const char *fpath, const struct stat *sb, int typeflag) {
+  REQUIRES(fpath != NULL && sb != NULL);
+
+  // See man 7 inode to read about permissions macros
+  if (typeflag == FTW_F && sb->st_mode & S_IXUSR) {
+    print("%s\n", fpath);
+  }
+
+  return 0;
+  (void)sb;
+}
+
+
+/*
+ * List files being served and note whether they will be served statically or
+ * executed dynamically.
+ */
+void print_files(void) {
+  print("Files that will be accessible while the server is running:\n");
+  if (ftw(".", static_callback, MAX_FILE_NUM) < 0) {
+    perror("ftw");
+    fatal_error("Failed to list files that will be statically served.\n");
+  }
+  print("\n");
+
+  print("(Note: if you expect to see files below that aren't there, use the\n"
+      "following to make the executable: 'chmod +x filename')\n");
+  print("Files that will be run when accessed from the server:\n");
+  if (ftw(".", dynamic_callback, MAX_FILE_NUM) < 0) {
+    perror("ftw");
+    fatal_error("Failed to list files that will be dynamically served.\n");
+  }
+  print("\n");
+}
+
+
+/*
  * Open a socket listening on the input port number. Returns the socket
  * descriptor of the listening socket.
+ *
+ * This code is aggressively commented for my own benefit. I know that when I
+ * look back at it after any more than a month, I'll have forgotten the details
+ * of opening listening sockets. If you are me from the future listening to
+ * this, you're welcome.
  *
  * Based on a function of the same name lin "csapp.c" from Computer Systems, A
  * Programmer's Perspective. This book is used in 15-213 at Carnegie Mellon
