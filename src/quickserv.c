@@ -11,6 +11,9 @@
 #include <stdio.h>
 #include <unistd.h>
 
+// Wrappers around syscalls to handle failures automatically
+#include "wrappers.h"
+
 // Include miscellaneous helper functions
 #include "helpers.h"
 
