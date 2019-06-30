@@ -1,6 +1,6 @@
 # QuickServ
 
-**Quick**, no-setup web **Serv**er
+**Quick**, no-setup web **Serv**er (currently unfinished)
 
 
 ## About
