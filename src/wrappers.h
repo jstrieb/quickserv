@@ -36,5 +36,8 @@ void Setsockopt(int sockfd, int level, int optname, const void *optval,
 void Close(int fd);
 void Listen(int fd, int backlog);
 int Accept(int sockfd);
+void Sigprocmask(int how, const sigset_t *set, sigset_t *oldset);
+void Sigfillset(sigset_t *set);
+void *Calloc(size_t n, size_t size);
 
 #endif /* _WRAPPERS_H */

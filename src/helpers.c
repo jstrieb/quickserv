@@ -24,6 +24,9 @@
 // available on their server
 #include <ftw.h>
 
+// Used for blocking signals before reading to prevent interruptions
+#include <signal.h>
+
 // Use contracts if debugging is enabled
 #include "contracts.h"
 
@@ -44,7 +47,43 @@ extern int verbose;
 
 
 /******************************************************************************
- * Helper Functions
+ * Internal Helper Functions
+ *****************************************************************************/
+
+/*
+ * Callback used by ftw to print statically-served files
+ */
+int static_callback(const char *fpath, const struct stat *sb, int typeflag) {
+  REQUIRES(fpath != NULL && sb != NULL);
+
+  // See man 7 inode to read about permissions macros
+  if (typeflag == FTW_F && !(sb->st_mode & S_IXUSR)) {
+    print("%s\n", fpath);
+  }
+
+  return 0;
+}
+
+
+/*
+ * Callback used by ftw to print dynamically-served files that will be executed
+ * when accessed
+ */
+int dynamic_callback(const char *fpath, const struct stat *sb, int typeflag) {
+  REQUIRES(fpath != NULL && sb != NULL);
+
+  // See man 7 inode to read about permissions macros
+  if (typeflag == FTW_F && sb->st_mode & S_IXUSR) {
+    print("%s\n", fpath);
+  }
+
+  return 0;
+}
+
+
+
+/******************************************************************************
+ * Public Helper Functions
  *****************************************************************************/
 
 /*
@@ -113,36 +152,67 @@ void print_wd(void) {
 
 
 /*
- * Callback used by ftw to print statically-served files
+ * Read bytes into a buffer of size MAXLINE until it reaches capacity, or
+ * until it finds a newline character. Allocate a char * of the correct size,
+ * copy the buffer into it, and return it to the user.
+ *
+ * The user is responsible for freeing the response.
+ *
+ * TODO: Check that I did the signal blocking and unblocking properly
  */
-int static_callback(const char *fpath, const struct stat *sb, int typeflag) {
-  REQUIRES(fpath != NULL && sb != NULL);
+char *read_line(int fd) {
+  REQUIRES(fd > 0);
 
-  // See man 7 inode to read about permissions macros
-  if (typeflag == FTW_F && !(sb->st_mode & S_IXUSR)) {
-    print("%s\n", fpath);
+  // Block all signals so the read can't be interrupted
+  sigset_t oldset, newset;
+  Sigfillset(&newset);
+  Sigprocmask(SIG_SETMASK, &newset, &oldset);
+
+  char buf[MAXLINE];
+  char *next_char = (char *) &buf;
+  size_t size = 0;
+  char *result = NULL;
+
+  // Read one character at a time until we reach '\n' or the buffer is full
+  while (size < MAXLINE) {
+    ssize_t bytes_read = read(fd, next_char, 1);
+    ASSERT(bytes_read <= 1);
+
+    // Successfully read a character
+    if (bytes_read == 1) {
+      size++;
+      if (*(next_char++) == '\n') {
+        break;
+      }
+    }
+
+    // EOF
+    else if (bytes_read == 0) {
+      size = 1;
+      break;
+    }
+
+    // Error reading a character
+    else if (bytes_read < 0) {
+      fatal_error("Failed to read from file descriptor %d\n", fd);
+    }
   }
 
-  return 0;
+  // Allocate a return value and copy the buffer into it
+  result = (char *) memcpy(Calloc(size, sizeof(char)), &buf, size - 1);
+
+  // Unblock signals, restore the sigset from the beginning
+  Sigprocmask(SIG_SETMASK, &oldset, NULL);
+
+  ENSURES(result != NULL);
+  return result;
 }
 
 
-/*
- * Callback used by ftw to print dynamically-served files that will be executed
- * when accessed
- */
-int dynamic_callback(const char *fpath, const struct stat *sb, int typeflag) {
-  REQUIRES(fpath != NULL && sb != NULL);
 
-  // See man 7 inode to read about permissions macros
-  if (typeflag == FTW_F && sb->st_mode & S_IXUSR) {
-    print("%s\n", fpath);
-  }
-
-  return 0;
-  (void)sb;
-}
-
+/******************************************************************************
+ * Main Procedure Helper Functions
+ *****************************************************************************/
 
 /*
  * List files being served and note whether they will be served statically or
@@ -173,8 +243,8 @@ void print_files(void) {
  *
  * This code is aggressively commented for my own benefit. I know that when I
  * look back at it after any more than a month, I'll have forgotten the details
- * of opening listening sockets. If you are me from the future listening to
- * this, you're welcome.
+ * of opening listening sockets. If you are me from the future reading this,
+ * you're welcome.
  *
  * Based on a function of the same name lin "csapp.c" from Computer Systems, A
  * Programmer's Perspective. This book is used in 15-213 at Carnegie Mellon
@@ -246,4 +316,20 @@ int open_listenfd(const char *port) {
 
   ENSURES(sockfd >= 0);
   return sockfd;
+}
+
+
+/*
+ * Parse the request line into a requestline_t struct
+ *
+ * Returned struct will need to be freed by the user
+ */
+requestline_t *parse_requestline(int connfd) {
+  REQUIRES(connfd > 0);
+
+  char *line = read_line(connfd);
+  print("%s\n", line);
+  free(line);
+
+  return NULL;
 }

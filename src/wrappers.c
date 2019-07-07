@@ -16,6 +16,9 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
+// Used for sigprocmask
+#include <signal.h>
+
 // Use contracts if debugging is enabled
 #include "contracts.h"
 
@@ -127,5 +130,46 @@ int Accept(int sockfd) {
   print("Client connected at %s:%s\n", client_name, client_port);
 
   ENSURES(result >= 0);
+  return result;
+}
+
+
+/*
+ * Set the current process signal block mask
+ */
+void Sigprocmask(int how, const sigset_t *set, sigset_t *oldset) {
+  if (sigprocmask(how, set, oldset) < 0) {
+    perror("sigprocmask");
+    fatal_error("Failed to set signal mask\n");
+  }
+}
+
+
+/*
+ * Fill a sigset_t entirely
+ */
+void Sigfillset(sigset_t *set) {
+  REQUIRES(set != NULL);
+
+  if (sigfillset(set) < 0) {
+    perror("sigfillset");
+    fatal_error("Failed to create a filled signal set\n");
+  }
+
+  ENSURES(set != NULL);
+}
+
+
+/*
+ * Allocate a zeroed block of memory
+ */
+void *Calloc(size_t n, size_t size) {
+  void *result;
+
+  if ((result = calloc(n, size)) == NULL) {
+    fatal_error("Failed to allocate memory (calloc)\n");
+  }
+
+  ENSURES(result != NULL);
   return result;
 }
