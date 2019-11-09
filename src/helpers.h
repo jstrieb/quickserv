@@ -18,11 +18,10 @@
 // Macros
 #define BACKLOG 128
 #define MAX_FILE_NUM 20
-#define MAXLINE 1024 // 1kb per line, max
+#define MAXLINE 1024 // 1kb per line, max (for now)
 
 // Type definitions and structs
 typedef struct {
-  char *line;
   char *method;
   char *target;
   char *version;
@@ -38,5 +37,7 @@ char *read_line(int fd);
 void print_files(void);
 int open_listenfd(const char *port);
 requestline_t *parse_requestline(int connfd);
+
+void free_requestline(requestline_t *line);
 
 #endif /* _HELPERS_H */

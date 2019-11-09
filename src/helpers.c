@@ -53,10 +53,10 @@ extern int verbose;
 /*
  * Callback used by ftw to print statically-served files
  */
-int static_callback(const char *fpath, const struct stat *sb, int typeflag) {
+int _static_callback(const char *fpath, const struct stat *sb, int typeflag) {
   REQUIRES(fpath != NULL && sb != NULL);
 
-  // See man 7 inode to read about permissions macros
+  // See "man 7 inode" to read about permissions macros
   if (typeflag == FTW_F && !(sb->st_mode & S_IXUSR)) {
     print("%s\n", fpath);
   }
@@ -69,10 +69,10 @@ int static_callback(const char *fpath, const struct stat *sb, int typeflag) {
  * Callback used by ftw to print dynamically-served files that will be executed
  * when accessed
  */
-int dynamic_callback(const char *fpath, const struct stat *sb, int typeflag) {
+int _dynamic_callback(const char *fpath, const struct stat *sb, int typeflag) {
   REQUIRES(fpath != NULL && sb != NULL);
 
-  // See man 7 inode to read about permissions macros
+  // See "man 7 inode" to read about permissions macros
   if (typeflag == FTW_F && sb->st_mode & S_IXUSR) {
     print("%s\n", fpath);
   }
@@ -153,7 +153,7 @@ void print_wd(void) {
 
 /*
  * Read bytes into a buffer of size MAXLINE until it reaches capacity, or
- * until it finds a newline character. Allocate a char * of the correct size,
+ * until it finds a newline character. Allocate a char* of the correct size,
  * copy the buffer into it, and return it to the user.
  *
  * The user is responsible for freeing the response.
@@ -193,6 +193,7 @@ char *read_line(int fd) {
     }
 
     // Error reading a character
+    // TODO: Check if should actually kill the program for error reading
     else if (bytes_read < 0) {
       fatal_error("Failed to read from file descriptor %d\n", fd);
     }
@@ -220,7 +221,7 @@ char *read_line(int fd) {
  */
 void print_files(void) {
   print("Files that will be accessible while the server is running:\n");
-  if (ftw(".", static_callback, MAX_FILE_NUM) < 0) {
+  if (ftw(".", _static_callback, MAX_FILE_NUM) < 0) {
     perror("ftw");
     fatal_error("Failed to list files that will be statically served.\n");
   }
@@ -229,7 +230,7 @@ void print_files(void) {
   print("(Note: if you expect to see files below that aren't there, use the\n"
       "following to make the file executable: 'chmod +x filename')\n");
   print("Files that will be run when accessed from the server:\n");
-  if (ftw(".", dynamic_callback, MAX_FILE_NUM) < 0) {
+  if (ftw(".", _dynamic_callback, MAX_FILE_NUM) < 0) {
     perror("ftw");
     fatal_error("Failed to list files that will be dynamically served.\n");
   }
@@ -320,16 +321,53 @@ int open_listenfd(const char *port) {
 
 
 /*
- * Parse the request line into a requestline_t struct
+ * Parse the request line into a requestline_t struct.
  *
- * Returned struct will need to be freed by the user
+ * Returned struct will need to be freed by the user.
  */
 requestline_t *parse_requestline(int connfd) {
   REQUIRES(connfd > 0);
 
-  char *line = read_line(connfd);
-  print("%s\n", line);
-  free(line);
+  // Allocate a request line struct
+  requestline_t *line = (requestline_t *) Calloc(1, sizeof(requestline_t));
+  ASSERT(line != NULL);
 
-  return NULL;
+  // Read the request line from the connection
+  char *raw_line = read_line(connfd);
+
+  // Parse the request line on the stack
+  char method[MAXLINE], target[MAXLINE], version[MAXLINE];
+  if (sscanf(raw_line, "%s %s %s", (char *) &method, (char *) &target,
+        (char *) &version) < 3) {
+    print("Parsing request line failed\n");
+    return NULL;
+  }
+
+  // If successfully parsed, store the parts on the heap in the struct
+  line->method = Strndup(method, MAXLINE);
+  line->target = Strndup(target, MAXLINE);
+  line->version = Strndup(version, MAXLINE);
+  dbg_print("Received %s request for %s with HTTP version %s\n", line->method,
+      line->target, line->version);
+
+  // Free the now-parsed raw request line text
+  free(raw_line);
+
+  return line;
+}
+
+
+/*
+ * Allow the client of the helper function to free the request line properly.
+ */
+void free_requestline(requestline_t *line) {
+  if (line == NULL) return;
+
+  // Free struct fields
+  free(line->method);
+  free(line->target);
+  free(line->version);
+
+  // Free struct
+  free(line);
 }

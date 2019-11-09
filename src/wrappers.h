@@ -39,5 +39,6 @@ int Accept(int sockfd);
 void Sigprocmask(int how, const sigset_t *set, sigset_t *oldset);
 void Sigfillset(sigset_t *set);
 void *Calloc(size_t n, size_t size);
+char *Strndup(const char *s, size_t n);
 
 #endif /* _WRAPPERS_H */

@@ -104,12 +104,14 @@ int main(int argc, char *argv[]) {
 
     // Parse the request line into a struct
     requestline_t *requestline = parse_requestline(connfd);
-    free(requestline);
 
     // TODO: Parse the headers into a linked list
     // TODO: Parse the content, if it exists
     // TODO: If the target is an executable, dup2 the connfd to stdin and execve
     // TODO: Otherwise, if the target is a file, serve it
+
+    // Free the request line struct properly
+    free_requestline(requestline);
 
     // Close the accepted connection
     dbg_print("Closing client connection\n");

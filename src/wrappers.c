@@ -11,6 +11,9 @@
 #include <stdio.h>
 #include <unistd.h>
 
+// Used for string duplication functions
+#include <string.h>
+
 // Used for opening a listening socket
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -168,6 +171,20 @@ void *Calloc(size_t n, size_t size) {
 
   if ((result = calloc(n, size)) == NULL) {
     fatal_error("Failed to allocate memory (calloc)\n");
+  }
+
+  ENSURES(result != NULL);
+  return result;
+}
+
+/*
+ * Duplicate a string on the heap
+ */
+char *Strndup(const char *s, size_t n) {
+  char *result;
+
+  if ((result = strndup(s, n)) == NULL) {
+    fatal_error("Failed to allocate memory (strndup)\n");
   }
 
   ENSURES(result != NULL);
