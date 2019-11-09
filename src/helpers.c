@@ -12,6 +12,9 @@
 #include <unistd.h>
 #include <string.h>
 
+// Used for strncasecmp -- NOTE: different from string.h
+#include <strings.h>
+
 // Used for variable arguments
 #include <stdarg.h>
 
@@ -210,6 +213,35 @@ char *read_line(int fd) {
 }
 
 
+/*
+ * Allow the client of the helper function to free the request line properly.
+ */
+void free_requestline(requestline_t *line) {
+  if (line == NULL) return;
+
+  // Free struct fields
+  free(line->method);
+  free(line->target);
+  free(line->version);
+
+  // Free struct
+  free(line);
+}
+
+
+/*
+ * Close the open connection if the operation completed or there was an error.
+ */
+void close_connection(int connfd, requestline_t *requestline) {
+  // Free the request line struct properly
+  free_requestline(requestline);
+
+  // Close the accepted connection
+  dbg_print("Closing client connection\n");
+  Close(connfd);
+}
+
+
 
 /******************************************************************************
  * Main Procedure Helper Functions
@@ -353,21 +385,36 @@ requestline_t *parse_requestline(int connfd) {
   // Free the now-parsed raw request line text
   free(raw_line);
 
+  ENSURES(line != NULL);
+  ENSURES(line->method != NULL
+      && line->target != NULL
+      && line->version != NULL);
   return line;
 }
 
 
 /*
- * Allow the client of the helper function to free the request line properly.
+ * Return true if the parsed request line is valid, and can be responded to.
+ * Otherwise, return false.
+ *
+ * Does not address validity in the sense of NULL struct fields. Instead,
+ * validity is determined based on whether the current version of QuickServ
+ * meets the spec of the request. For example, only GET and POST requests are
+ * valid.
  */
-void free_requestline(requestline_t *line) {
-  if (line == NULL) return;
+int valid_requestline(const requestline_t *line) {
+  REQUIRES(line != NULL);
+  REQUIRES(line->method != NULL && line->version != NULL);
 
-  // Free struct fields
-  free(line->method);
-  free(line->target);
-  free(line->version);
+  // Check request type (GET or POST)
+  if (strncasecmp(line->method, "GET", MAXLINE) != 0
+      && strncasecmp(line->method, "POST", MAXLINE) != 0)
+    return 0;
 
-  // Free struct
-  free(line);
+  // Check HTTP version 1.1
+  if (strncasecmp(line->version, "HTTP/1.1", MAXLINE) != 0)
+    return 0;
+
+  // If all tests passed, return true
+  return 1;
 }

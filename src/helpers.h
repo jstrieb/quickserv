@@ -33,11 +33,12 @@ void print(const char* fmt, ...);
 void dbg_print(const char* fmt, ...);
 void print_wd(void);
 char *read_line(int fd);
+void free_requestline(requestline_t *line);
+void close_connection(int connfd, requestline_t *requestline);
 
 void print_files(void);
 int open_listenfd(const char *port);
 requestline_t *parse_requestline(int connfd);
-
-void free_requestline(requestline_t *line);
+int valid_requestline(const requestline_t *line);
 
 #endif /* _HELPERS_H */
