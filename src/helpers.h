@@ -40,5 +40,6 @@ void print_files(void);
 int open_listenfd(const char *port);
 requestline_t *parse_requestline(int connfd);
 int valid_requestline(const requestline_t *line);
+int parse_headers(int connfd);
 
 #endif /* _HELPERS_H */

@@ -115,7 +115,10 @@ int main(int argc, char *argv[]) {
     // TODO: Remove
     dbg_print("Valid request line\n");
 
-    // TODO: Parse the headers into a linked list
+    // TODO: Parse the headers into a hash table, as-per RFC 7230, page 20
+    int content_length = parse_headers(connfd);
+    (void)content_length;
+
     // TODO: Parse the content, if it exists
     // TODO: If the target is an executable, dup2 the connfd to stdin and execve
     // TODO: Otherwise, if the target is a file, serve it

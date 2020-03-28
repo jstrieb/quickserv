@@ -12,9 +12,6 @@
 #include <unistd.h>
 #include <string.h>
 
-// Used for strncasecmp -- NOTE: different from string.h
-#include <strings.h>
-
 // Used for variable arguments
 #include <stdarg.h>
 
@@ -29,6 +26,9 @@
 
 // Used for blocking signals before reading to prevent interruptions
 #include <signal.h>
+
+// Used for managing hash table of request header key-value pairs
+#include <search.h>
 
 // Use contracts if debugging is enabled
 #include "contracts.h"
@@ -162,6 +162,9 @@ void print_wd(void) {
  * The user is responsible for freeing the response.
  *
  * TODO: Check that I did the signal blocking and unblocking properly
+ * TODO: Fix to work with realloc instead of a buffer of length MAXLINE, will
+ * help comply with RFC 7230 (pg 21-22) which detail responses for URIs and
+ * request lines that are too long
  */
 char *read_line(int fd) {
   REQUIRES(fd > 0);
@@ -407,8 +410,8 @@ int valid_requestline(const requestline_t *line) {
   REQUIRES(line->method != NULL && line->version != NULL);
 
   // Check request type (GET or POST)
-  if (strncasecmp(line->method, "GET", MAXLINE) != 0
-      && strncasecmp(line->method, "POST", MAXLINE) != 0)
+  if (strncmp(line->method, "GET", MAXLINE) != 0
+      && strncmp(line->method, "POST", MAXLINE) != 0)
     return 0;
 
   // Check HTTP version 1.1
@@ -417,4 +420,15 @@ int valid_requestline(const requestline_t *line) {
 
   // If all tests passed, return true
   return 1;
+}
+
+
+/*
+ * TODO
+ */
+int parse_headers(int connfd) {
+  return 0;
+
+  // TODO: Remove
+  (void)connfd;
 }
