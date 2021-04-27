@@ -21,6 +21,8 @@ func NewExecutableHandler(path string) func(http.ResponseWriter, *http.Request) 
 		// TODO: Handle GET requests
 		// TODO: Handle form data
 
+		log.Println("Executing:", path)
+
 		wd, err := os.Getwd()
 		if err != nil {
 			log.Println(err)
@@ -28,7 +30,13 @@ func NewExecutableHandler(path string) func(http.ResponseWriter, *http.Request) 
 			return
 		}
 
-		cmd := exec.Command(filepath.Join(wd, path))
+		var cmd *exec.Cmd
+		switch runtime.GOOS {
+		case "windows":
+			cmd = exec.Command("cmd.exe", "/Q", "/C", filepath.Join(wd, path))
+		default:
+			cmd = exec.Command(filepath.Join(wd, path))
+		}
 
 		// Pass request body on standard input
 		stdin, err := cmd.StdinPipe()
@@ -84,10 +92,11 @@ func main() {
 		// Executables are represented differently on different operating systems
 		switch runtime.GOOS {
 		case "windows":
-			// If ends in .exe, register a file handler
-			if filepath.Ext(path) == ".exe" {
+			// Register executable handlers based on file extension
+			switch filepath.Ext(path) {
+			case ".exe", ".bat":
 				fmt.Println(path)
-				mux.HandleFunc(string(filepath.Separator)+path, NewExecutableHandler(path))
+				mux.HandleFunc("/"+filepath.ToSlash(path), NewExecutableHandler(path))
 			}
 
 		default:
@@ -99,8 +108,7 @@ func main() {
 			// TODO: Does it make sense to look for executable by any user?
 			filemode := fileinfo.Mode()
 			if !filemode.IsDir() && filemode.Perm()&0111 != 0 {
-				fmt.Println(path)
-				mux.HandleFunc(string(filepath.Separator)+path, NewExecutableHandler(path))
+				mux.HandleFunc("/"+filepath.ToSlash(path), NewExecutableHandler(path))
 			}
 		}
 
@@ -117,7 +125,7 @@ func main() {
 	mux.Handle("/", http.FileServer(http.Dir(".")))
 
 	// TODO: Display local IP address instead of localhost
-	fmt.Println("Staring a server...")
+	log.Println("Staring a server...")
 	fmt.Println("Visit http://localhost:42069 to access the server from the local network.")
 	fmt.Println("Press Control + C to stop the server.")
 	fmt.Println()
