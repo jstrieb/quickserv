@@ -2,9 +2,12 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"io/fs"
 	"log"
 	"net/http"
+	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 )
@@ -12,11 +15,58 @@ import (
 // NewExecutableHandler returns a handler for an executable path that when
 // accessed: executes the file at the path, passes the request body via
 // standard input, gets the response via standard output and returns that as
-// the response body
+// the response body. The returned function is a closure over the path.
 func NewExecutableHandler(path string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// TODO
-		fmt.Fprintln(w, path)
+		// TODO: Handle GET requests
+		// TODO: Handle form data
+
+		wd, err := os.Getwd()
+		if err != nil {
+			log.Println(err)
+			http.Error(w, http.StatusText(500), 500)
+			return
+		}
+
+		cmd := exec.Command(filepath.Join(wd, path))
+
+		// Pass request body on standard input
+		stdin, err := cmd.StdinPipe()
+		if err != nil {
+			log.Println(err)
+			http.Error(w, http.StatusText(500), 500)
+			return
+		}
+		go func() {
+			defer stdin.Close()
+			// TODO: Handle copy failure
+			io.Copy(stdin, r.Body)
+		}()
+
+		// Print out stderror messages for debugging
+		stderr, err := cmd.StderrPipe()
+		if err != nil {
+			log.Println(err)
+			http.Error(w, http.StatusText(500), 500)
+			return
+		}
+		go func() {
+			defer stderr.Close()
+			data, _ := io.ReadAll(stderr)
+			if len(data) > 0 {
+				log.Println(string(data))
+			}
+		}()
+
+		// Execute the command and write the output as the HTTP response
+		out, err := cmd.Output()
+		if err != nil {
+			log.Println(err)
+			http.Error(w, http.StatusText(500), 500)
+			return
+		}
+
+		w.Write(out)
 	}
 }
 
@@ -59,7 +109,8 @@ func main() {
 
 	fmt.Println("")
 	if err != nil {
-		log.Fatal("Failed while trying to find executables in the working directory!")
+		log.Println("Failed while trying to find executables in the working directory!")
+		log.Fatal(err)
 	}
 
 	// Statically serve non-executable files that don't already have a handler
@@ -68,5 +119,8 @@ func main() {
 	// TODO: Display local IP address instead of localhost
 	fmt.Println("Staring a server...")
 	fmt.Println("Visit http://localhost:42069 to access the server from the local network.")
+	fmt.Println("Press Control + C to stop the server.")
+	fmt.Println()
+
 	log.Fatal(http.ListenAndServe(":42069", mux))
 }
