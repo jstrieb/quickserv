@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"io/fs"
@@ -18,9 +19,6 @@ import (
 // the response body. The returned function is a closure over the path.
 func NewExecutableHandler(path string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// TODO: Handle GET requests
-		// TODO: Handle form data
-
 		log.Println("Executing:", path)
 
 		wd, err := os.Getwd()
@@ -41,8 +39,27 @@ func NewExecutableHandler(path string) func(http.ResponseWriter, *http.Request) 
 		}
 		go func() {
 			defer stdin.Close()
-			// TODO: Handle copy failure
-			io.Copy(stdin, r.Body)
+
+			// TODO: Handle copy failure in both cases
+			switch r.Method {
+			case "POST":
+				// POST data may not necessarily be form data (e.g.  JSON API
+				// request), so don't encode it as a form necessarily.  If it is
+				// a form submission, it will be properly encoded anyway.
+				io.Copy(stdin, r.Body)
+
+			default:
+				// Encode non-POST data as a form for consistency
+				err := r.ParseForm()
+				if err != nil {
+					log.Println(err)
+					http.Error(w, http.StatusText(500), 500)
+					return
+				}
+
+				formdata := []byte(r.Form.Encode())
+				io.Copy(stdin, bytes.NewReader(formdata))
+			}
 		}()
 
 		// Print out stderror messages for debugging
