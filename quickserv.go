@@ -30,13 +30,7 @@ func NewExecutableHandler(path string) func(http.ResponseWriter, *http.Request) 
 			return
 		}
 
-		var cmd *exec.Cmd
-		switch runtime.GOOS {
-		case "windows":
-			cmd = exec.Command("cmd.exe", "/Q", "/C", filepath.Join(wd, path))
-		default:
-			cmd = exec.Command(filepath.Join(wd, path))
-		}
+		cmd := exec.Command(filepath.Join(wd, path))
 
 		// Pass request body on standard input
 		stdin, err := cmd.StdinPipe()
