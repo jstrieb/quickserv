@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 )
 
 // NewExecutableHandler returns a handler for an executable path that when
@@ -28,7 +29,18 @@ func NewExecutableHandler(path string) func(http.ResponseWriter, *http.Request) 
 			return
 		}
 
+		// Create the command using all environment variables. Include a
+		// REQUEST_METHOD environment variable in imitation of CGI
 		cmd := exec.Command(filepath.Join(wd, path))
+		cmd.Env = append(os.Environ(), "REQUEST_METHOD="+r.Method)
+
+		// Pass headers as environment variables in imitation of CGI
+		for k, v := range r.Header {
+			// The same header can have multiple values
+			for _, s := range v {
+				cmd.Env = append(cmd.Env, "HTTP_"+strings.ReplaceAll(k, "-", "_")+"="+s)
+			}
+		}
 
 		// Pass request body on standard input
 		stdin, err := cmd.StdinPipe()
