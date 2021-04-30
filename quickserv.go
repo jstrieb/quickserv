@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/fs"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/exec"
@@ -13,6 +14,23 @@ import (
 	"runtime"
 	"strings"
 )
+
+// GetLocalIP finds the IP address of the computer on the local area network so
+// anyone on the same network can connect to the server. Code inspired by:
+// https://stackoverflow.com/a/37382208/1376127
+func GetLocalIP() string {
+	conn, err := net.Dial("udp", "example.com:80")
+	if err != nil {
+		log.Println(err)
+		log.Println("Could not get local IP address.")
+		return "127.0.0.1"
+	}
+	defer conn.Close()
+
+	localAddr := conn.LocalAddr().(*net.UDPAddr)
+
+	return localAddr.IP.String()
+}
 
 // NewExecutableHandler returns a handler for an executable path that when
 // accessed: executes the file at the path, passes the request body via
@@ -147,9 +165,11 @@ func main() {
 	// Statically serve non-executable files that don't already have a handler
 	mux.Handle("/", http.FileServer(http.Dir(".")))
 
-	// TODO: Display local IP address instead of localhost
-	log.Println("Staring a server...")
-	fmt.Println("Visit http://localhost:42069 to access the server from the local network.")
+	log.Println("Starting a server...")
+
+	localIP := GetLocalIP()
+	fmt.Printf("Visit http://%s:42069 to access the server from the local network.\n", localIP)
+
 	fmt.Println("Press Control + C to stop the server.")
 	fmt.Println()
 
