@@ -32,7 +32,7 @@ func GetLocalIP() string {
 	return localAddr.IP.String()
 }
 
-// NewExecutableHandler returns a handler for an executable path that when
+// NewExecutableHandler returns a handler for an executable path that, when
 // accessed: executes the file at the path, passes the request body via
 // standard input, gets the response via standard output and returns that as
 // the response body. The returned function is a closure over the path.
@@ -73,8 +73,8 @@ func NewExecutableHandler(path string) func(http.ResponseWriter, *http.Request) 
 			// TODO: Handle copy failure in both cases
 			switch r.Method {
 			case "POST":
-				// POST data may not necessarily be form data (e.g.  JSON API
-				// request), so don't encode it as a form necessarily.  If it is
+				// POST data may not necessarily be form data (e.g. JSON API
+				// request), so don't encode it as a form necessarily. If it is
 				// a form submission, it will be properly encoded anyway.
 				io.Copy(stdin, r.Body)
 
@@ -120,14 +120,28 @@ func NewExecutableHandler(path string) func(http.ResponseWriter, *http.Request) 
 }
 
 func main() {
+	// Print the current working directory
+	wd, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("Running in folder:\n%v\n\n", wd)
+
 	mux := http.NewServeMux()
 
 	// Walk the working directory looking for executable files and register
 	// handlers to execute them
 	fmt.Println("Files that will be executed if accessed: ")
-	err := filepath.WalkDir(".", func(path string, d fs.DirEntry, err error) error {
+	err = filepath.WalkDir(".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
+		}
+
+		// Ignore the executable for quickserv itself if it's in the directory
+		_, filename := filepath.Split(path)
+		switch filename {
+		case "quickserv", "quickserv.exe":
+			return nil
 		}
 
 		// Executables are represented differently on different operating systems
@@ -141,12 +155,12 @@ func main() {
 			}
 
 		default:
-			// Check the permission bits, assume consistency across Linux/OS X
+			// Check the permission bits, assume consistency across Linux/OS X/others
 			fileinfo, err := d.Info()
 			if err != nil {
 				return err
 			}
-			// TODO: Does it make sense to look for executable by any user?
+			// TODO: Does it make sense to look for files executable by any user?
 			filemode := fileinfo.Mode()
 			if !filemode.IsDir() && filemode.Perm()&0111 != 0 {
 				mux.HandleFunc("/"+filepath.ToSlash(path), NewExecutableHandler(path))
