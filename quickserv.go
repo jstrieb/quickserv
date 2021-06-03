@@ -8,6 +8,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -30,6 +31,47 @@ func GetLocalIP() string {
 	localAddr := conn.LocalAddr().(*net.UDPAddr)
 
 	return localAddr.IP.String()
+}
+
+// DecodeForm performs URL query unescaping on encoded form data to make parsing
+// easier. Remaining encoded strings are:
+// 		% -> %25
+// 		& -> %26
+// 		= -> %3D
+//
+// If "%" is not encoded first in the pre-encoding step, then it will encode the
+// percent signs from the encoding of & and = in addition to real percent signs,
+// which will give incorrect results.
+func DecodeForm(form url.Values) ([]byte, error) {
+	// Pre-encoding step where special characters are encoded before the entire
+	// form is encoded and then decoded
+	new_form := make(url.Values, len(form))
+	for k, vs := range form {
+		// Replace equals, percent, and ampersands in form variable names
+		// NOTE: "%" must be encoded first -- see above
+		new_k := strings.ReplaceAll(k, "%", "%26")
+		new_k = strings.ReplaceAll(new_k, "&", "%25")
+		new_k = strings.ReplaceAll(new_k, "=", "%3D")
+		new_form[new_k] = make([]string, len(form[k]))
+
+		// Replace equals, percent, and ampersands in form variable values
+		// NOTE: "%" must be encoded first -- see above
+		for i, v := range vs {
+			v = strings.ReplaceAll(v, "%", "%26")
+			v = strings.ReplaceAll(v, "&", "%25")
+			v = strings.ReplaceAll(v, "=", "%3D")
+			new_form[new_k][i] = v
+		}
+	}
+
+	// Encode the form as a string and decode as almost entirely the plain text
+	raw_form_data := []byte(new_form.Encode())
+	form_data, err := url.QueryUnescape(string(raw_form_data))
+	if err != nil {
+		return nil, err
+	}
+
+	return []byte(form_data), nil
 }
 
 // NewExecutableHandler returns a handler for an executable path that, when
@@ -70,16 +112,11 @@ func NewExecutableHandler(path string) func(http.ResponseWriter, *http.Request) 
 		go func() {
 			defer stdin.Close()
 
-			// TODO: Handle copy failure in both cases
-			switch r.Method {
-			case "POST":
-				// POST data may not necessarily be form data (e.g. JSON API
-				// request), so don't encode it as a form necessarily. If it is
-				// a form submission, it will be properly encoded anyway.
-				io.Copy(stdin, r.Body)
+			fmt.Println(r.Method, r.Header["Content-Type"])
 
-			default:
-				// Encode non-POST data as a form for consistency
+			if r.Method != "POST" || (len(r.Header["Content-Type"]) >= 1 && r.Header["Content-Type"][0] == "application/x-www-form-urlencoded") {
+				// If the submission is a non-POST request, or is a form
+				// submission according to content type, treat it like a form
 				err := r.ParseForm()
 				if err != nil {
 					log.Println(err)
@@ -87,8 +124,29 @@ func NewExecutableHandler(path string) func(http.ResponseWriter, *http.Request) 
 					return
 				}
 
-				formdata := []byte(r.Form.Encode())
-				io.Copy(stdin, bytes.NewReader(formdata))
+				form_data, err := DecodeForm(r.Form)
+				if err != nil {
+					log.Println(err)
+					http.Error(w, http.StatusText(500), 500)
+					return
+				}
+				_, err = io.Copy(stdin, bytes.NewReader(form_data))
+				if err != nil {
+					log.Println(err)
+					http.Error(w, http.StatusText(500), 500)
+					return
+				}
+			} else {
+				// This POST data is not form data (may be a JSON API request,
+				// for example), so don't encode it as a form. If it is a
+				// multipart or other form submission, it will be properly
+				// encoded already.
+				_, err := io.Copy(stdin, r.Body)
+				if err != nil {
+					log.Println(err)
+					http.Error(w, http.StatusText(500), 500)
+					return
+				}
 			}
 		}()
 
@@ -169,7 +227,6 @@ func main() {
 
 		return nil
 	})
-
 	fmt.Println("")
 	if err != nil {
 		log.Println("Failed while trying to find executables in the working directory!")
@@ -179,11 +236,9 @@ func main() {
 	// Statically serve non-executable files that don't already have a handler
 	mux.Handle("/", http.FileServer(http.Dir(".")))
 
-	log.Println("Starting a server...")
-
 	localIP := GetLocalIP()
+	log.Println("Starting a server...")
 	fmt.Printf("Visit http://%s:42069 to access the server from the local network.\n", localIP)
-
 	fmt.Println("Press Control + C to stop the server.")
 	fmt.Println()
 
