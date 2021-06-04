@@ -112,8 +112,6 @@ func NewExecutableHandler(path string) func(http.ResponseWriter, *http.Request) 
 		go func() {
 			defer stdin.Close()
 
-			fmt.Println(r.Method, r.Header["Content-Type"])
-
 			if r.Method != "POST" || (len(r.Header["Content-Type"]) >= 1 && r.Header["Content-Type"][0] == "application/x-www-form-urlencoded") {
 				// If the submission is a non-POST request, or is a form
 				// submission according to content type, treat it like a form
@@ -221,6 +219,7 @@ func main() {
 			// TODO: Does it make sense to look for files executable by any user?
 			filemode := fileinfo.Mode()
 			if !filemode.IsDir() && filemode.Perm()&0111 != 0 {
+				fmt.Println(path)
 				mux.HandleFunc("/"+filepath.ToSlash(path), NewExecutableHandler(path))
 			}
 		}
