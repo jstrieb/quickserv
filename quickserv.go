@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"flag"
 	"fmt"
 	"io"
 	"io/fs"
@@ -16,14 +17,24 @@ import (
 	"strings"
 )
 
+/******************************************************************************
+ * Global Variables and Constants
+ *****************************************************************************/
+
+var logger *log.Logger
+
+/******************************************************************************
+ * Helper Functions
+ *****************************************************************************/
+
 // GetLocalIP finds the IP address of the computer on the local area network so
 // anyone on the same network can connect to the server. Code inspired by:
 // https://stackoverflow.com/a/37382208/1376127
 func GetLocalIP() string {
 	conn, err := net.Dial("udp", "example.com:80")
 	if err != nil {
-		log.Println(err)
-		log.Println("Could not get local IP address.")
+		logger.Println(err)
+		logger.Println("Could not get local IP address.")
 		return "127.0.0.1"
 	}
 	defer conn.Close()
@@ -80,11 +91,11 @@ func DecodeForm(form url.Values) ([]byte, error) {
 // the response body. The returned function is a closure over the path.
 func NewExecutableHandler(path string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Println("Executing:", path)
+		logger.Println("Executing:", path)
 
 		wd, err := os.Getwd()
 		if err != nil {
-			log.Println(err)
+			logger.Println(err)
 			http.Error(w, http.StatusText(500), 500)
 			return
 		}
@@ -105,7 +116,7 @@ func NewExecutableHandler(path string) func(http.ResponseWriter, *http.Request) 
 		// Pass request body on standard input
 		stdin, err := cmd.StdinPipe()
 		if err != nil {
-			log.Println(err)
+			logger.Println(err)
 			http.Error(w, http.StatusText(500), 500)
 			return
 		}
@@ -117,20 +128,20 @@ func NewExecutableHandler(path string) func(http.ResponseWriter, *http.Request) 
 				// submission according to content type, treat it like a form
 				err := r.ParseForm()
 				if err != nil {
-					log.Println(err)
+					logger.Println(err)
 					http.Error(w, http.StatusText(500), 500)
 					return
 				}
 
 				form_data, err := DecodeForm(r.Form)
 				if err != nil {
-					log.Println(err)
+					logger.Println(err)
 					http.Error(w, http.StatusText(500), 500)
 					return
 				}
 				_, err = io.Copy(stdin, bytes.NewReader(form_data))
 				if err != nil {
-					log.Println(err)
+					logger.Println(err)
 					http.Error(w, http.StatusText(500), 500)
 					return
 				}
@@ -141,7 +152,7 @@ func NewExecutableHandler(path string) func(http.ResponseWriter, *http.Request) 
 				// encoded already.
 				_, err := io.Copy(stdin, r.Body)
 				if err != nil {
-					log.Println(err)
+					logger.Println(err)
 					http.Error(w, http.StatusText(500), 500)
 					return
 				}
@@ -151,7 +162,7 @@ func NewExecutableHandler(path string) func(http.ResponseWriter, *http.Request) 
 		// Print out stderror messages for debugging
 		stderr, err := cmd.StderrPipe()
 		if err != nil {
-			log.Println(err)
+			logger.Println(err)
 			http.Error(w, http.StatusText(500), 500)
 			return
 		}
@@ -159,14 +170,14 @@ func NewExecutableHandler(path string) func(http.ResponseWriter, *http.Request) 
 			defer stderr.Close()
 			data, _ := io.ReadAll(stderr)
 			if len(data) > 0 {
-				log.Println(string(data))
+				logger.Println(string(data))
 			}
 		}()
 
 		// Execute the command and write the output as the HTTP response
 		out, err := cmd.Output()
 		if err != nil {
-			log.Println(err)
+			logger.Println(err)
 			http.Error(w, http.StatusText(500), 500)
 			return
 		}
@@ -175,11 +186,40 @@ func NewExecutableHandler(path string) func(http.ResponseWriter, *http.Request) 
 	}
 }
 
+/******************************************************************************
+ * Main Function
+ *****************************************************************************/
+
 func main() {
+	// Parse command line arguments
+	var logfilename string
+	// flag.StringVar(&logfilename, "l", "-", "Log file path. Stdout if unspecified.")
+	flag.StringVar(&logfilename, "logfile-name", "-", "Log file path. Stdout if unspecified.")
+	flag.Parse()
+
+	// Initialize the logger
+	var logfile *os.File
+	if logfilename == "-" {
+		logfile = os.Stdout
+	} else {
+		mode := os.O_WRONLY | os.O_APPEND | os.O_CREATE
+		var err error
+		logfile, err = os.OpenFile(logfilename, mode, os.ModePerm)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if abspath, err := filepath.Abs(logfilename); err == nil {
+			fmt.Printf("Logging to folder:\n%v\n", abspath)
+		} else {
+			log.Fatal(err)
+		}
+	}
+	logger = log.New(logfile, "", log.LstdFlags)
+
 	// Print the current working directory
 	wd, err := os.Getwd()
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 	fmt.Printf("Running in folder:\n%v\n\n", wd)
 
@@ -196,7 +236,7 @@ func main() {
 		// Ignore the executable for quickserv itself if it's in the directory
 		_, filename := filepath.Split(path)
 		switch filename {
-		case "quickserv", "quickserv.exe":
+		case "quickserv", "quickserv.exe", logfilename:
 			return nil
 		}
 
@@ -228,18 +268,18 @@ func main() {
 	})
 	fmt.Println("")
 	if err != nil {
-		log.Println("Failed while trying to find executables in the working directory!")
-		log.Fatal(err)
+		logger.Println("Failed while trying to find executables in the working directory!")
+		logger.Fatal(err)
 	}
 
 	// Statically serve non-executable files that don't already have a handler
 	mux.Handle("/", http.FileServer(http.Dir(".")))
 
 	localIP := GetLocalIP()
-	log.Println("Starting a server...")
+	logger.Println("Starting a server...")
 	fmt.Printf("Visit http://%s:42069 to access the server from the local network.\n", localIP)
 	fmt.Println("Press Control + C to stop the server.")
 	fmt.Println()
 
-	log.Fatal(http.ListenAndServe(":42069", mux))
+	logger.Fatal(http.ListenAndServe(":42069", mux))
 }
