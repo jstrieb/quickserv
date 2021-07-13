@@ -192,12 +192,13 @@ func NewExecutableHandler(path string) func(http.ResponseWriter, *http.Request) 
 
 func main() {
 	// Parse command line arguments
-	var logfilename string
+	var logfilename, wd string
 	// flag.StringVar(&logfilename, "l", "-", "Log file path. Stdout if unspecified.")
-	flag.StringVar(&logfilename, "logfile-name", "-", "Log file path. Stdout if unspecified.")
+	flag.StringVar(&logfilename, "logfile", "-", "Log file path. Stdout if unspecified.")
+	flag.StringVar(&wd, "working-directory", ".", "Folder to serve files from.")
 	flag.Parse()
 
-	// Initialize the logger
+	// Initialize logger with logfile relative to the initial working directory
 	var logfile *os.File
 	if logfilename == "-" {
 		logfile = os.Stdout
@@ -216,7 +217,10 @@ func main() {
 	}
 	logger = log.New(logfile, "", log.LstdFlags)
 
-	// Print the current working directory
+	// Switch directories and print the current working directory
+	if err := os.Chdir(wd); err != nil {
+		logger.Fatal(err)
+	}
 	wd, err := os.Getwd()
 	if err != nil {
 		logger.Fatal(err)
