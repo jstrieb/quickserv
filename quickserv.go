@@ -22,6 +22,7 @@ import (
  *****************************************************************************/
 
 var logger *log.Logger
+var routes map[string]struct{}
 
 /******************************************************************************
  * Helper Functions
@@ -231,10 +232,17 @@ func main() {
 
 	// Walk the working directory looking for executable files and register
 	// handlers to execute them
+	routes = make(map[string]struct{})
 	fmt.Println("Files that will be executed if accessed: ")
 	err = filepath.WalkDir(".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
+		}
+
+		// Don't re-register any existing routes
+		route := "/" + filepath.ToSlash(path)
+		if _, in := routes[route]; in {
+			return nil
 		}
 
 		// Ignore the executable for quickserv itself if it's in the directory
@@ -251,7 +259,8 @@ func main() {
 			switch filepath.Ext(path) {
 			case ".exe", ".bat":
 				fmt.Println(path)
-				mux.HandleFunc("/"+filepath.ToSlash(path), NewExecutableHandler(path))
+				mux.HandleFunc(route, NewExecutableHandler(path))
+				routes[route] = struct{}{}
 			}
 
 		default:
@@ -264,7 +273,8 @@ func main() {
 			filemode := fileinfo.Mode()
 			if !filemode.IsDir() && filemode.Perm()&0111 != 0 {
 				fmt.Println(path)
-				mux.HandleFunc("/"+filepath.ToSlash(path), NewExecutableHandler(path))
+				mux.HandleFunc(route, NewExecutableHandler(path))
+				routes[route] = struct{}{}
 			}
 		}
 
