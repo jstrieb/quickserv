@@ -22,7 +22,7 @@ import (
  *****************************************************************************/
 
 var logger *log.Logger
-var routes map[string]struct{}
+var routes map[string]string
 
 /******************************************************************************
  * Helper Functions
@@ -192,8 +192,18 @@ func NewExecutableHandler(path string) func(http.ResponseWriter, *http.Request) 
 // execute the file at the given path when accessed. It also modifies the
 // global list of routes.
 func RegisterExecutableHandler(mux *http.ServeMux, path, route, dir, filename string) {
-	mux.HandleFunc(route, NewExecutableHandler(path))
-	routes[route] = struct{}{}
+	handler := NewExecutableHandler(path)
+
+	mux.HandleFunc(route, handler)
+	routes[route] = ""
+
+	dirRoute := "/" + filepath.ToSlash(dir)
+	if _, in := routes[dirRoute]; strings.TrimSuffix(filename, filepath.Ext(filename)) == "index" && !in {
+		// Register handlers with and without the trailing "/" to avoid redirect
+		mux.HandleFunc(dirRoute, handler)
+		mux.HandleFunc(dirRoute+"/", handler)
+		routes[dirRoute+"/"] = route
+	}
 }
 
 // RegisterPaths walks the current directory and registers handlers to run any
@@ -214,6 +224,7 @@ func RegisterPaths(mux *http.ServeMux, logfileName string) error {
 
 		// Ignore the executable for quickserv itself if it's in the directory
 		dir, filename := filepath.Split(path)
+		dir = filepath.Clean(dir)
 		switch filename {
 		case "quickserv", "quickserv.exe", logfileName:
 			return nil
@@ -292,17 +303,22 @@ func main() {
 
 	// Walk the working directory looking for executable files and register
 	// handlers to execute them
-	routes = make(map[string]struct{})
+	routes = make(map[string]string)
 	err = RegisterPaths(mux, logfileName)
 	if err != nil {
 		logger.Println("Failed while trying to find executables in the working directory!")
 		logger.Fatal(err)
 	}
 
+	// Print non-static routes that will be executed (if any)
 	if len(routes) > 0 {
 		fmt.Println("Files that will be executed if accessed: ")
-		for k := range routes {
-			fmt.Println(k)
+		for k, v := range routes {
+			if v == "" {
+				fmt.Println(k)
+			} else {
+				fmt.Printf("%v -> %v\n", k, v)
+			}
 		}
 	} else {
 		fmt.Println("No files will be executed if accessed!")
