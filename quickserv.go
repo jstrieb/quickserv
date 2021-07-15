@@ -94,7 +94,7 @@ func NewExecutableHandler(path string) func(http.ResponseWriter, *http.Request) 
 	return func(w http.ResponseWriter, r *http.Request) {
 		logger.Println("Executing:", path)
 
-		wd, err := os.Getwd()
+		abspath, err := filepath.Abs(path)
 		if err != nil {
 			logger.Println(err)
 			http.Error(w, http.StatusText(500), 500)
@@ -103,7 +103,7 @@ func NewExecutableHandler(path string) func(http.ResponseWriter, *http.Request) 
 
 		// Create the command using all environment variables. Include a
 		// REQUEST_METHOD environment variable in imitation of CGI
-		cmd := exec.Command(filepath.Join(wd, path))
+		cmd := exec.Command(abspath)
 		cmd.Env = append(os.Environ(), "REQUEST_METHOD="+r.Method)
 
 		// Pass headers as environment variables in imitation of CGI
@@ -124,7 +124,8 @@ func NewExecutableHandler(path string) func(http.ResponseWriter, *http.Request) 
 		go func() {
 			defer stdin.Close()
 
-			if r.Method != "POST" || (len(r.Header["Content-Type"]) >= 1 && r.Header["Content-Type"][0] == "application/x-www-form-urlencoded") {
+			if r.Method != "POST" || (len(r.Header["Content-Type"]) > 0 &&
+				r.Header["Content-Type"][0] == "application/x-www-form-urlencoded") {
 				// If the submission is a non-POST request, or is a form
 				// submission according to content type, treat it like a form
 				err := r.ParseForm()
@@ -187,30 +188,89 @@ func NewExecutableHandler(path string) func(http.ResponseWriter, *http.Request) 
 	}
 }
 
+// RegisterExecutableHandler associates the given route with a handler to
+// execute the file at the given path when accessed. It also modifies the
+// global list of routes.
+func RegisterExecutableHandler(mux *http.ServeMux, path, route, dir, filename string) {
+	mux.HandleFunc(route, NewExecutableHandler(path))
+	routes[route] = struct{}{}
+}
+
+// RegisterPaths walks the current directory and registers handlers to run any
+// executable files it finds. The handlers are added as routes to the given
+// mux.
+func RegisterPaths(mux *http.ServeMux, logfileName string) error {
+	return filepath.WalkDir(".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// Don't re-register any existing routes
+		path = filepath.Clean(path)
+		route := "/" + filepath.ToSlash(path)
+		if _, in := routes[route]; in {
+			return nil
+		}
+
+		// Ignore the executable for quickserv itself if it's in the directory
+		dir, filename := filepath.Split(path)
+		switch filename {
+		case "quickserv", "quickserv.exe", logfileName:
+			return nil
+		}
+
+		// Executables are represented differently on different operating systems
+		switch runtime.GOOS {
+		case "windows":
+			// Register executable handlers based on file extension
+			switch filepath.Ext(path) {
+			case ".exe", ".bat":
+				RegisterExecutableHandler(mux, path, route, dir, filename)
+			}
+
+		default:
+			// Check the permission bits, assume consistency across Linux/OS X/others
+			fileinfo, err := d.Info()
+			if err != nil {
+				return err
+			}
+			// TODO: Does it make sense to look for files executable by any user?
+			filemode := fileinfo.Mode()
+			if !filemode.IsDir() && filemode.Perm()&0111 != 0 {
+				RegisterExecutableHandler(mux, path, route, dir, filename)
+			}
+		}
+
+		return nil
+	})
+}
+
 /******************************************************************************
  * Main Function
  *****************************************************************************/
 
 func main() {
 	// Parse command line arguments
-	var logfilename, wd string
-	// flag.StringVar(&logfilename, "l", "-", "Log file path. Stdout if unspecified.")
-	flag.StringVar(&logfilename, "logfile", "-", "Log file path. Stdout if unspecified.")
-	flag.StringVar(&wd, "working-directory", ".", "Folder to serve files from.")
+	// TODO: Handle long and short options
+	var logfileName, wd string
+	// flag.StringVar(&logfileName, "l", "-", "Log file path. Stdout if unspecified.")
+	flag.StringVar(&logfileName, "logfile", "-", "Log file path. Stdout if unspecified.")
+	// flag.StringVar(&wd, "d", ".", "Folder to serve files from.")
+	flag.StringVar(&wd, "dir", ".", "Folder to serve files from.")
 	flag.Parse()
 
-	// Initialize logger with logfile relative to the initial working directory
+	// Initialize logfile relative to the initial working directory
 	var logfile *os.File
-	if logfilename == "-" {
+	if logfileName == "-" {
 		logfile = os.Stdout
 	} else {
 		mode := os.O_WRONLY | os.O_APPEND | os.O_CREATE
 		var err error
-		logfile, err = os.OpenFile(logfilename, mode, os.ModePerm)
+		logfile, err = os.OpenFile(logfileName, mode, os.ModePerm)
 		if err != nil {
 			log.Fatal(err)
 		}
-		if abspath, err := filepath.Abs(logfilename); err == nil {
+		if abspath, err := filepath.Abs(logfileName); err == nil {
 			fmt.Printf("Logging to folder:\n%v\n", abspath)
 		} else {
 			log.Fatal(err)
@@ -233,58 +293,25 @@ func main() {
 	// Walk the working directory looking for executable files and register
 	// handlers to execute them
 	routes = make(map[string]struct{})
-	fmt.Println("Files that will be executed if accessed: ")
-	err = filepath.WalkDir(".", func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-
-		// Don't re-register any existing routes
-		route := "/" + filepath.ToSlash(path)
-		if _, in := routes[route]; in {
-			return nil
-		}
-
-		// Ignore the executable for quickserv itself if it's in the directory
-		_, filename := filepath.Split(path)
-		switch filename {
-		case "quickserv", "quickserv.exe", logfilename:
-			return nil
-		}
-
-		// Executables are represented differently on different operating systems
-		switch runtime.GOOS {
-		case "windows":
-			// Register executable handlers based on file extension
-			switch filepath.Ext(path) {
-			case ".exe", ".bat":
-				fmt.Println(path)
-				mux.HandleFunc(route, NewExecutableHandler(path))
-				routes[route] = struct{}{}
-			}
-
-		default:
-			// Check the permission bits, assume consistency across Linux/OS X/others
-			fileinfo, err := d.Info()
-			if err != nil {
-				return err
-			}
-			// TODO: Does it make sense to look for files executable by any user?
-			filemode := fileinfo.Mode()
-			if !filemode.IsDir() && filemode.Perm()&0111 != 0 {
-				fmt.Println(path)
-				mux.HandleFunc(route, NewExecutableHandler(path))
-				routes[route] = struct{}{}
-			}
-		}
-
-		return nil
-	})
-	fmt.Println("")
+	err = RegisterPaths(mux, logfileName)
 	if err != nil {
 		logger.Println("Failed while trying to find executables in the working directory!")
 		logger.Fatal(err)
 	}
+
+	if len(routes) > 0 {
+		fmt.Println("Files that will be executed if accessed: ")
+		for k := range routes {
+			fmt.Println(k)
+		}
+	} else {
+		fmt.Println("No files will be executed if accessed!")
+		fmt.Println("To make a file executable on Mac or Linux, run \"chmod +x filename\" from the Terminal.")
+		fmt.Println("On Windows only .bat and .exe files will be executed.")
+		// TODO
+		// fmt.Println("For more information see the documentation here: TODO")
+	}
+	fmt.Println("")
 
 	// Statically serve non-executable files that don't already have a handler
 	mux.Handle("/", http.FileServer(http.Dir(".")))
