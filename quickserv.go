@@ -103,11 +103,16 @@ func NewExecutableHandler(path string) func(http.ResponseWriter, *http.Request) 
 			http.Error(w, http.StatusText(500), 500)
 			return
 		}
+		dir, _ := filepath.Split(abspath)
 
 		// Create the command using all environment variables. Include a
 		// REQUEST_METHOD environment variable in imitation of CGI
 		cmd := exec.Command(abspath)
 		cmd.Env = append(os.Environ(), "REQUEST_METHOD="+r.Method)
+
+		// Execute the route in its own directory so relative paths behave
+		// sensibly
+		cmd.Dir = dir
 
 		// Pass headers as environment variables in imitation of CGI
 		for k, v := range r.Header {
