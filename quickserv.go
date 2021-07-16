@@ -2,11 +2,13 @@ package main
 
 import (
 	"bytes"
+	"crypto/rand"
 	"flag"
 	"fmt"
 	"io"
 	"io/fs"
 	"log"
+	"math/big"
 	"net"
 	"net/http"
 	"net/url"
@@ -14,6 +16,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 )
 
@@ -264,10 +267,12 @@ func main() {
 	// Parse command line arguments
 	// TODO: Handle long and short options
 	var logfileName, wd string
+	var randomPort bool
 	// flag.StringVar(&logfileName, "l", "-", "Log file path. Stdout if unspecified.")
 	flag.StringVar(&logfileName, "logfile", "-", "Log file path. Stdout if unspecified.")
 	// flag.StringVar(&wd, "d", ".", "Folder to serve files from.")
 	flag.StringVar(&wd, "dir", ".", "Folder to serve files from.")
+	flag.BoolVar(&randomPort, "random-port", false, "Use a random port instead of 42069.")
 	flag.Parse()
 
 	// Initialize logfile relative to the initial working directory
@@ -332,11 +337,27 @@ func main() {
 	// Statically serve non-executable files that don't already have a handler
 	mux.Handle("/", http.FileServer(http.Dir(".")))
 
+	// Pick a random port if the user wants -- for slightly more professional
+	// demos where the number 42069 might be undesirable
+	var port int64
+	if randomPort {
+		// Avoid privileged ports (those below 1024). Cryptographic randomness
+		// might be a bit much here, but ¯\(°_o)/¯
+		rawPort, err := rand.Int(rand.Reader, big.NewInt(65535-1025))
+		if err != nil {
+			logger.Fatal(err)
+		}
+		port = rawPort.Int64() + 1025
+		fmt.Printf("Using port %v.\n\n", port)
+	} else {
+		port = 42069
+	}
+
 	localIP := GetLocalIP()
 	logger.Println("Starting a server...")
-	fmt.Printf("Visit http://%s:42069 to access the server from the local network.\n", localIP)
+	fmt.Printf("Visit http://%v:%v to access the server from the local network.\n", localIP, port)
 	fmt.Println("Press Control + C to stop the server.")
 	fmt.Println()
 
-	logger.Fatal(http.ListenAndServe(":42069", mux))
+	logger.Fatal(http.ListenAndServe(":"+strconv.FormatInt(port, 10), mux))
 }
