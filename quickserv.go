@@ -64,16 +64,16 @@ func DecodeForm(form url.Values) ([]byte, error) {
 	for k, vs := range form {
 		// Replace equals, percent, and ampersands in form variable names
 		// NOTE: "%" must be encoded first -- see above
-		new_k := strings.ReplaceAll(k, "%", "%26")
-		new_k = strings.ReplaceAll(new_k, "&", "%25")
+		new_k := strings.ReplaceAll(k, "%", "%25")
+		new_k = strings.ReplaceAll(new_k, "&", "%26")
 		new_k = strings.ReplaceAll(new_k, "=", "%3D")
 		new_form[new_k] = make([]string, len(form[k]))
 
 		// Replace equals, percent, and ampersands in form variable values
 		// NOTE: "%" must be encoded first -- see above
 		for i, v := range vs {
-			v = strings.ReplaceAll(v, "%", "%26")
-			v = strings.ReplaceAll(v, "&", "%25")
+			v = strings.ReplaceAll(v, "%", "%25")
+			v = strings.ReplaceAll(v, "&", "%26")
 			v = strings.ReplaceAll(v, "=", "%3D")
 			new_form[new_k][i] = v
 		}
