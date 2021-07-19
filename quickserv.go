@@ -59,14 +59,14 @@ func GetLocalIP() string {
 func DecodeForm(form url.Values) ([]byte, error) {
 	// Pre-encoding step where special characters are encoded before the entire
 	// form is encoded and then decoded
-	new_form := make(url.Values, len(form))
+	newForm := make(url.Values, len(form))
 	for k, vs := range form {
 		// Replace equals, percent, and ampersands in form variable names
 		// NOTE: "%" must be encoded first -- see above
-		new_k := strings.ReplaceAll(k, "%", "%25")
-		new_k = strings.ReplaceAll(new_k, "&", "%26")
-		new_k = strings.ReplaceAll(new_k, "=", "%3D")
-		new_form[new_k] = make([]string, len(form[k]))
+		newK := strings.ReplaceAll(k, "%", "%25")
+		newK = strings.ReplaceAll(newK, "&", "%26")
+		newK = strings.ReplaceAll(newK, "=", "%3D")
+		newForm[newK] = make([]string, len(form[k]))
 
 		// Replace equals, percent, and ampersands in form variable values
 		// NOTE: "%" must be encoded first -- see above
@@ -74,18 +74,18 @@ func DecodeForm(form url.Values) ([]byte, error) {
 			v = strings.ReplaceAll(v, "%", "%25")
 			v = strings.ReplaceAll(v, "&", "%26")
 			v = strings.ReplaceAll(v, "=", "%3D")
-			new_form[new_k][i] = v
+			newForm[newK][i] = v
 		}
 	}
 
 	// Encode the form as a string and decode as almost entirely the plain text
-	raw_form_data := []byte(new_form.Encode())
-	form_data, err := url.QueryUnescape(string(raw_form_data))
+	rawFormData := []byte(newForm.Encode())
+	formData, err := url.QueryUnescape(string(rawFormData))
 	if err != nil {
 		return nil, err
 	}
 
-	return []byte(form_data), nil
+	return []byte(formData), nil
 }
 
 // IsPathExecutable returns whether or not a given file is executable based on
@@ -169,13 +169,13 @@ func ExecutePath(path string, w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			form_data, err := DecodeForm(r.Form)
+			formData, err := DecodeForm(r.Form)
 			if err != nil {
 				logger.Println(err)
 				http.Error(w, http.StatusText(500), 500)
 				return
 			}
-			_, err = io.Copy(stdin, bytes.NewReader(form_data))
+			_, err = io.Copy(stdin, bytes.NewReader(formData))
 			if err != nil {
 				logger.Println(err)
 				http.Error(w, http.StatusText(500), 500)
