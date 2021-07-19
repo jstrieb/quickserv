@@ -353,6 +353,21 @@ func NewMainHandler(filesystem http.FileSystem) http.Handler {
 				return
 			} else {
 				reqPath = index
+				fNew, err := filesystem.Open(reqPath)
+				if err != nil {
+					// If we can't open the file, let the FileServer handle it correctly
+					logger.Println(err)
+					fileserver.ServeHTTP(w, r)
+					return
+				}
+				defer fNew.Close()
+				d, err = fNew.Stat()
+				if err != nil {
+					logger.Println(err)
+					// If we can't open the file, let the FileServer handle it correctly
+					fileserver.ServeHTTP(w, r)
+					return
+				}
 			}
 		}
 
