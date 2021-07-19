@@ -78,7 +78,7 @@ func DecodeForm(form url.Values) ([]byte, error) {
 		}
 	}
 
-	// Encode the form as a string and decode as almost entirely the plain text
+	// Encode the form as a string and decode as almost entirely plain text
 	rawFormData := []byte(newForm.Encode())
 	formData, err := url.QueryUnescape(string(rawFormData))
 	if err != nil {
@@ -94,36 +94,44 @@ func DecodeForm(form url.Values) ([]byte, error) {
 // On Windows, a file is executable if and only if it has a file extension of
 // "exe" or "bat." On other operating systems, any file with the execute bit set
 // for at least one user is deemed executable.
-func IsPathExecutable(path string, fileinfo fs.FileInfo) (bool, error) {
+//
+// NOTE: This function may not return accurate results if given a directory as
+// input. This has not been extensively tested.
+func IsPathExecutable(path string, fileinfo fs.FileInfo) bool {
 	switch runtime.GOOS {
 	case "windows":
 		// Register executable handlers based on file extension
 		switch filepath.Ext(path) {
 		case ".exe", ".bat":
-			return true, nil
+			return true
 		}
 
 	default:
 		// TODO: Does it make sense to look for files executable by any user?
 		filemode := fileinfo.Mode()
 		if !filemode.IsDir() && filemode.Perm()&0111 != 0 {
-			return true, nil
+			return true
 		}
 	}
 
-	return false, nil
+	return false
 }
 
-// ExecutePath runs an executable path that when accessed: executes the file at
-// the path, passes the request body via standard input, gets the response via
-// standard output and returns that as the response body.
-func ExecutePath(path string, w http.ResponseWriter, r *http.Request) {
-	logger.Println("Executing:", path)
+// ExecutePath executes the file at the path, passes the request body via
+// standard input, gets the response via standard output and writes that as the
+// response body.
+//
+// NOTE: Expects the input path to be rooted with forward slashes as the
+// separator (HTTP request style)
+func ExecutePath(execPath string, w http.ResponseWriter, r *http.Request) {
+	logger.Println("Executing:", execPath)
 
-	if strings.HasPrefix(path, "/") {
-		path = "." + path
+	// Clean up the path and make it un-rooted
+	if strings.HasPrefix(execPath, "/") {
+		execPath = "." + execPath
 	}
-	abspath, err := filepath.Abs(path)
+	execPath = path.Clean(execPath)
+	abspath, err := filepath.Abs(filepath.FromSlash(execPath))
 	if err != nil {
 		logger.Println(err)
 		http.Error(w, http.StatusText(500), 500)
@@ -136,10 +144,6 @@ func ExecutePath(path string, w http.ResponseWriter, r *http.Request) {
 	cmd := exec.Command(abspath)
 	cmd.Env = append(os.Environ(), "REQUEST_METHOD="+r.Method)
 
-	// Execute the route in its own directory so relative paths in the executed
-	// program behave sensibly
-	cmd.Dir = dir
-
 	// Pass headers as environment variables in imitation of CGI
 	for k, v := range r.Header {
 		// The same header can have multiple values
@@ -148,16 +152,22 @@ func ExecutePath(path string, w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Execute the route in its own directory so relative paths in the executed
+	// program behave sensibly
+	cmd.Dir = dir
+
 	// Pass request body on standard input
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
 		logger.Println(err)
+		logger.Println("Couldn't pass the request body via stdin.")
 		http.Error(w, http.StatusText(500), 500)
 		return
 	}
 	go func() {
 		defer stdin.Close()
 
+		// TODO: Test with PUT/DELETE/other HTTP methods
 		if r.Method != "POST" || (len(r.Header["Content-Type"]) > 0 &&
 			r.Header["Content-Type"][0] == "application/x-www-form-urlencoded") {
 			// If the submission is a non-POST request, or is a form
@@ -165,6 +175,7 @@ func ExecutePath(path string, w http.ResponseWriter, r *http.Request) {
 			err := r.ParseForm()
 			if err != nil {
 				logger.Println(err)
+				logger.Println("Couldn't parse the request form.")
 				http.Error(w, http.StatusText(500), 500)
 				return
 			}
@@ -172,12 +183,14 @@ func ExecutePath(path string, w http.ResponseWriter, r *http.Request) {
 			formData, err := DecodeForm(r.Form)
 			if err != nil {
 				logger.Println(err)
+				logger.Println("Couldn't percent-decode the request form.")
 				http.Error(w, http.StatusText(500), 500)
 				return
 			}
 			_, err = io.Copy(stdin, bytes.NewReader(formData))
 			if err != nil {
 				logger.Println(err)
+				logger.Println("Couldn't copy the form data to the program.")
 				http.Error(w, http.StatusText(500), 500)
 				return
 			}
@@ -189,6 +202,7 @@ func ExecutePath(path string, w http.ResponseWriter, r *http.Request) {
 			_, err := io.Copy(stdin, r.Body)
 			if err != nil {
 				logger.Println(err)
+				logger.Println("Couldn't copy the request body to the program.")
 				http.Error(w, http.StatusText(500), 500)
 				return
 			}
@@ -199,6 +213,7 @@ func ExecutePath(path string, w http.ResponseWriter, r *http.Request) {
 	stderr, err := cmd.StderrPipe()
 	if err != nil {
 		logger.Println(err)
+		logger.Println("Couldn't get stderr output to print.")
 		http.Error(w, http.StatusText(500), 500)
 		return
 	}
@@ -223,7 +238,11 @@ func ExecutePath(path string, w http.ResponseWriter, r *http.Request) {
 
 // FindIndexFile returns the path to the index file of the directory path given
 // as input (if one exists). If there is no index file, or if there was a fatal
-// error during the search, the second returned value is false.
+// error during the search, the the first returned value is the empty string and
+// the second value is false.
+//
+// NOTE: The input dir is expected to be a rooted path with forward slashes, and
+// the output has the same format
 func FindIndexFile(dir string) (string, bool) {
 	file, err := http.Dir(".").Open(dir)
 	if err != nil {
@@ -237,11 +256,8 @@ func FindIndexFile(dir string) (string, bool) {
 	}
 	for _, file := range files {
 		filename := file.Name()
-		isExecutable, err := IsPathExecutable(filename, file)
-		if err != nil {
-			continue
-		}
-		if isExecutable && strings.TrimSuffix(filename, path.Ext(filename)) == "index" {
+		if IsPathExecutable(filename, file) &&
+			strings.TrimSuffix(filename, path.Ext(filename)) == "index" {
 			return path.Join(dir, filename), true
 		}
 	}
@@ -249,7 +265,9 @@ func FindIndexFile(dir string) (string, bool) {
 }
 
 // FindExecutablePaths walks the current directory and locates paths that will
-// be executed when visited. It returns them as a map.
+// be executed when visited. It returns them as a map. In the map keys are paths
+// that cause a file to be executed, and values are either the empty string or
+// the file to be executed when the path is accessed.
 func FindExecutablePaths(logfileName string) (map[string]string, error) {
 	routes := make(map[string]string)
 
@@ -267,6 +285,7 @@ func FindExecutablePaths(logfileName string) (map[string]string, error) {
 		_, filename := filepath.Split(path)
 		fileinfo, err := d.Info()
 		if err != nil {
+			logger.Printf("Couldn't get file info for %v.\n", filename)
 			return err
 		}
 		switch filename {
@@ -280,16 +299,11 @@ func FindExecutablePaths(logfileName string) (map[string]string, error) {
 			if found {
 				routes[path] = index
 			}
-
 			return nil
 		}
 
 		// Print a result if executable
-		isExecutable, err := IsPathExecutable(path, fileinfo)
-		if err != nil {
-			return err
-		}
-		if isExecutable {
+		if IsPathExecutable(path, fileinfo) {
 			routes[path] = ""
 		}
 		return nil
@@ -324,13 +338,14 @@ func NewMainHandler(filesystem http.FileSystem) http.Handler {
 		d, err := f.Stat()
 		if err != nil {
 			logger.Println(err)
+			// If we can't open the file, let the FileServer handle it correctly
 			fileserver.ServeHTTP(w, r)
 			return
 		}
 
 		// If the path is a directory, look for an index file. If none found,
 		// serve up the directory. Otherwise, act like the executable was the
-		// requested path.
+		// original requested path.
 		if d.IsDir() {
 			index, found := FindIndexFile(reqPath)
 			if !found {
@@ -341,13 +356,7 @@ func NewMainHandler(filesystem http.FileSystem) http.Handler {
 			}
 		}
 
-		isExecutable, err := IsPathExecutable(reqPath, d)
-		if err != nil {
-			logger.Println(err)
-			fileserver.ServeHTTP(w, r)
-			return
-		}
-		if isExecutable {
+		if IsPathExecutable(reqPath, d) {
 			// If the path is executable, run it
 			ExecutePath(reqPath, w, r)
 		} else {
@@ -417,6 +426,7 @@ func main() {
 		fmt.Println("No files will be executed if accessed!")
 		fmt.Println("To make a file executable on Mac or Linux, run \"chmod +x filename\" from the Terminal.")
 		fmt.Println("On Windows only .bat and .exe files will be executed.")
+		fmt.Println("When accessed, non-executable files will be viewed by the user instead of being run.")
 		// TODO
 		// fmt.Println("For more information see the documentation here: TODO")
 	}
