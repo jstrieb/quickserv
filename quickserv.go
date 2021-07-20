@@ -286,7 +286,7 @@ func FindExecutablePaths(logfileName string) (map[string]string, error) {
 		fileinfo, err := d.Info()
 		if err != nil {
 			logger.Printf("Couldn't get file info for %v.\n", filename)
-			return err
+			return nil
 		}
 		switch filename {
 		case "quickserv", "quickserv.exe", logfileName:
@@ -318,6 +318,12 @@ func NewMainHandler(filesystem http.FileSystem) http.Handler {
 	fileserver := http.FileServer(filesystem)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Write maximally permissive CORS headers
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "*")
+		w.Header().Set("Access-Control-Allow-Headers", "*")
+		w.Header().Set("Access-Control-Expose-Headers", "*")
+
 		// Clean up the request path
 		reqPath := r.URL.Path
 		if !strings.HasPrefix(reqPath, "/") {
