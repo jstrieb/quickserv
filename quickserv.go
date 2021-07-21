@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"io/ioutil"
 	"log"
 	"math/big"
 	"net"
@@ -16,6 +17,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
@@ -88,6 +90,28 @@ func DecodeForm(form url.Values) ([]byte, error) {
 	return []byte(formData), nil
 }
 
+// IsWSL returns whether or not the binary is running inside Windows Subsystem
+// for Linux (WSL). It guesses at this based on some heuristics. For more, see:
+// https://github.com/microsoft/WSL/issues/423#issuecomment-221627364
+func IsWSL() bool {
+	filesToCheck := []string{"/proc/version", "/proc/sys/kernel/osrelease"}
+
+	r, err := regexp.Compile("(?i)(wsl|microsoft|windows)")
+	if err != nil {
+		logger.Fatal("Error compiling regular expression.")
+		logger.Fatal(err)
+		return false
+	}
+
+	for _, filename := range filesToCheck {
+		raw, err := ioutil.ReadFile(filename)
+		if err == nil && r.Match(raw) {
+			return true
+		}
+	}
+	return false
+}
+
 // IsPathExecutable returns whether or not a given file is executable based on
 // its path and/or its permission bits (depending on the operating system).
 //
@@ -98,11 +122,28 @@ func DecodeForm(form url.Values) ([]byte, error) {
 // NOTE: This function may not return accurate results if given a directory as
 // input. This has not been extensively tested.
 func IsPathExecutable(path string, fileinfo fs.FileInfo) bool {
-	switch runtime.GOOS {
+	goos := runtime.GOOS
+
+	// Check if we are in Windows Subsystem for Linux. If so, behave differently
+	// since it's Linux but we can run .exe files, and since the permission bits
+	// are all messed up such that everything will be viewed as executable.
+	if IsWSL() {
+		goos = "wsl"
+	}
+
+	switch strings.ToLower(goos) {
 	case "windows":
 		// Register executable handlers based on file extension
-		switch filepath.Ext(path) {
-		case ".exe", ".bat":
+		switch strings.ToLower(filepath.Ext(path)) {
+		case ".exe", ".bat", ".cmd":
+			return true
+		}
+
+	case "wsl":
+		// Register executable handlers based on file extension
+		// TODO: Add more filenames? Or perhaps improve executable detection?
+		switch strings.ToLower(filepath.Ext(path)) {
+		case ".exe", ".sh", ".py":
 			return true
 		}
 
@@ -257,7 +298,7 @@ func FindIndexFile(dir string) (string, bool) {
 	for _, file := range files {
 		filename := file.Name()
 		if IsPathExecutable(filename, file) &&
-			strings.TrimSuffix(filename, path.Ext(filename)) == "index" {
+			strings.ToLower(strings.TrimSuffix(filename, path.Ext(filename))) == "index" {
 			return path.Join(dir, filename), true
 		}
 	}
@@ -288,7 +329,7 @@ func FindExecutablePaths(logfileName string) (map[string]string, error) {
 			logger.Printf("Couldn't get file info for %v.\n", filename)
 			return nil
 		}
-		switch filename {
+		switch strings.ToLower(filename) {
 		case "quickserv", "quickserv.exe", logfileName:
 			return nil
 		}
