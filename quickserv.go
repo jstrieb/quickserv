@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"crypto/rand"
 	"flag"
 	"fmt"
@@ -21,6 +22,8 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+
+	"github.com/jstrieb/killfam"
 )
 
 /******************************************************************************
@@ -164,7 +167,7 @@ func IsPathExecutable(path string, fileinfo fs.FileInfo) bool {
 //
 // NOTE: Expects the input path to be rooted with forward slashes as the
 // separator (HTTP request style)
-func ExecutePath(execPath string, w http.ResponseWriter, r *http.Request) {
+func ExecutePath(ctx context.Context, execPath string, w http.ResponseWriter, r *http.Request) {
 	logger.Println("Executing:", execPath)
 
 	// Clean up the path and make it un-rooted
@@ -185,12 +188,13 @@ func ExecutePath(execPath string, w http.ResponseWriter, r *http.Request) {
 	//
 	// I tried to do exec.CommandContext here, but it doesn't kill child
 	// processes, so anything run from a script keeps on going when the
-	// connection terminates. Making a cross-platform solution to create and
-	// kill process groups is more trouble than it's worth, considering this
-	// should never be used in production anyway.
-	// https://stackoverflow.com/a/29552044/1376127
+	// connection terminates. Instead I use a goroutine listening to the context
+	// with a custom package below.
 	cmd := exec.Command(abspath)
 	cmd.Env = append(os.Environ(), "REQUEST_METHOD="+r.Method)
+
+	// Make the process children killable
+	killfam.Augment(cmd)
 
 	// Pass headers as environment variables in imitation of CGI
 	for k, v := range r.Header {
@@ -273,8 +277,24 @@ func ExecutePath(execPath string, w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
+	// Kill the process if the user terminates their connection
+	cmdDone := make(chan error)
+	go func() {
+		select {
+		case <-ctx.Done():
+			logger.Println("User disconnected. Killing process.")
+			if err := killfam.KillTree(cmd); err != nil {
+				logger.Println(err)
+			}
+
+		case <-cmdDone:
+			return
+		}
+	}()
+
 	// Execute the command and write the output as the HTTP response
 	out, err := cmd.Output()
+	cmdDone <- err
 	if err != nil {
 		logger.Println(err)
 		http.Error(w, http.StatusText(500), 500)
@@ -427,7 +447,7 @@ func NewMainHandler(filesystem http.FileSystem) http.Handler {
 
 		if IsPathExecutable(reqPath, d) {
 			// If the path is executable, run it
-			ExecutePath(reqPath, w, r)
+			ExecutePath(r.Context(), reqPath, w, r)
 		} else {
 			fileserver.ServeHTTP(w, r)
 		}
