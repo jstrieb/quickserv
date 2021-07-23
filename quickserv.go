@@ -182,6 +182,13 @@ func ExecutePath(execPath string, w http.ResponseWriter, r *http.Request) {
 
 	// Create the command using all environment variables. Include a
 	// REQUEST_METHOD environment variable in imitation of CGI
+	//
+	// I tried to do exec.CommandContext here, but it doesn't kill child
+	// processes, so anything run from a script keeps on going when the
+	// connection terminates. Making a cross-platform solution to create and
+	// kill process groups is more trouble than it's worth, considering this
+	// should never be used in production anyway.
+	// https://stackoverflow.com/a/29552044/1376127
 	cmd := exec.Command(abspath)
 	cmd.Env = append(os.Environ(), "REQUEST_METHOD="+r.Method)
 
