@@ -36,6 +36,46 @@ var logger *log.Logger
  * Helper Functions
  *****************************************************************************/
 
+// NewLogFile initializes the logfile relative to the initial working directory.
+func NewLogFile(logfileName string) *log.Logger {
+	var logfile *os.File
+	if logfileName == "-" {
+		logfile = os.Stdout
+	} else {
+		mode := os.O_WRONLY | os.O_APPEND | os.O_CREATE
+		var err error
+		logfile, err = os.OpenFile(logfileName, mode, os.ModePerm)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer logfile.Close()
+		if abspath, err := filepath.Abs(logfileName); err == nil {
+			fmt.Printf("Logging to folder:\n%v\n", abspath)
+		} else {
+			log.Fatal(err)
+		}
+	}
+	return log.New(logfile, "", log.LstdFlags)
+}
+
+// PickPort returns the port that the server should run on. It either returns
+// port 42069 or a random port depending on the value of the argument.
+func PickPort(randomPort bool) int64 {
+	if randomPort {
+		// Avoid privileged ports (those below 1024). Cryptographic randomness
+		// might be a bit much here, but ¯\(°_o)/¯
+		rawPort, err := rand.Int(rand.Reader, big.NewInt(65535-1025))
+		if err != nil {
+			logger.Fatal(err)
+		}
+		port := rawPort.Int64() + 1025
+		fmt.Printf("Using port %v.\n\n", port)
+		return port
+	} else {
+		return 42069
+	}
+}
+
 // GetLocalIP finds the IP address of the computer on the local area network so
 // anyone on the same network can connect to the server. Code inspired by:
 // https://stackoverflow.com/a/37382208/1376127
@@ -97,11 +137,15 @@ func DecodeForm(form url.Values) ([]byte, error) {
 // for Linux (WSL). It guesses at this based on some heuristics. For more, see:
 // https://github.com/microsoft/WSL/issues/423#issuecomment-221627364
 func IsWSL() bool {
+	if runtime.GOOS != "linux" {
+		return false
+	}
+
 	filesToCheck := []string{"/proc/version", "/proc/sys/kernel/osrelease"}
 
 	r, err := regexp.Compile("(?i)(wsl|microsoft|windows)")
 	if err != nil {
-		logger.Fatal("Error compiling regular expression.")
+		logger.Println("Error compiling regular expression.")
 		logger.Fatal(err)
 		return false
 	}
@@ -467,25 +511,7 @@ func main() {
 	flag.BoolVar(&randomPort, "random-port", false, "Use a random port instead of 42069.")
 	flag.Parse()
 
-	// Initialize logfile relative to the initial working directory
-	var logfile *os.File
-	if logfileName == "-" {
-		logfile = os.Stdout
-	} else {
-		mode := os.O_WRONLY | os.O_APPEND | os.O_CREATE
-		var err error
-		logfile, err = os.OpenFile(logfileName, mode, os.ModePerm)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer logfile.Close()
-		if abspath, err := filepath.Abs(logfileName); err == nil {
-			fmt.Printf("Logging to folder:\n%v\n", abspath)
-		} else {
-			log.Fatal(err)
-		}
-	}
-	logger = log.New(logfile, "", log.LstdFlags)
+	logger = NewLogFile(logfileName)
 
 	// Switch directories and print the current working directory
 	if err := os.Chdir(wd); err != nil {
@@ -523,19 +549,7 @@ func main() {
 
 	// Pick a random port if the user wants -- for slightly more professional
 	// demos where the number 42069 might be undesirable
-	var port int64
-	if randomPort {
-		// Avoid privileged ports (those below 1024). Cryptographic randomness
-		// might be a bit much here, but ¯\(°_o)/¯
-		rawPort, err := rand.Int(rand.Reader, big.NewInt(65535-1025))
-		if err != nil {
-			logger.Fatal(err)
-		}
-		port = rawPort.Int64() + 1025
-		fmt.Printf("Using port %v.\n\n", port)
-	} else {
-		port = 42069
-	}
+	port := PickPort(randomPort)
 
 	localIP := GetLocalIP()
 	logger.Println("Starting a server...")
@@ -547,5 +561,8 @@ func main() {
 	// execute them
 	handler := NewMainHandler(http.Dir("."))
 	addr := ":" + strconv.FormatInt(port, 10)
-	logger.Fatal(http.ListenAndServe(addr, handler))
+	if err = http.ListenAndServe(addr, handler); err != nil {
+		logger.Println("Make sure you are only running one instance of QuickServ!")
+		logger.Fatal(err)
+	}
 }
