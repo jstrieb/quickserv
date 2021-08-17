@@ -31,6 +31,7 @@ import (
  *****************************************************************************/
 
 var logger *log.Logger
+var noPause bool
 
 /******************************************************************************
  * Helper Functions
@@ -66,7 +67,7 @@ func PickPort(randomPort bool) int64 {
 		// might be a bit much here, but ¯\(°_o)/¯
 		rawPort, err := rand.Int(rand.Reader, big.NewInt(65535-1025))
 		if err != nil {
-			logger.Fatal(err)
+			Fatal(err)
 		}
 		port := rawPort.Int64() + 1025
 		fmt.Printf("Using port %v.\n\n", port)
@@ -74,6 +75,18 @@ func PickPort(randomPort bool) int64 {
 	} else {
 		return 42069
 	}
+}
+
+// Fatal prints a fatal error, then pauses before exit so the user can see error
+// messages. Useful if they double clicked the executable instead of running it
+// from the command line.
+func Fatal(s interface{}) {
+	logger.Println(s)
+	if !noPause {
+		fmt.Println("Press Enter to quit!")
+		fmt.Scanln()
+	}
+	os.Exit(1)
 }
 
 // GetLocalIP finds the IP address of the computer on the local area network so
@@ -146,7 +159,7 @@ func IsWSL() bool {
 	r, err := regexp.Compile("(?i)(wsl|microsoft|windows)")
 	if err != nil {
 		logger.Println("Error compiling regular expression.")
-		logger.Fatal(err)
+		Fatal(err)
 		return false
 	}
 
@@ -509,24 +522,25 @@ func main() {
 	flag.StringVar(&logfileName, "logfile", "-", "Log file path. Stdout if unspecified.")
 	flag.StringVar(&wd, "dir", ".", "Folder to serve files from.")
 	flag.BoolVar(&randomPort, "random-port", false, "Use a random port instead of 42069.")
+	flag.BoolVar(&noPause, "no-pause", false, "Don't pause before exiting after fatal error.")
 	flag.Parse()
 
 	logger = NewLogFile(logfileName)
 
 	// Switch directories and print the current working directory
 	if err := os.Chdir(wd); err != nil {
-		logger.Fatal(err)
+		Fatal(err)
 	}
 	wd, err := os.Getwd()
 	if err != nil {
-		logger.Fatal(err)
+		Fatal(err)
 	}
 	fmt.Printf("Running in folder:\n%v\n\n", wd)
 
 	// Print non-static routes that will be executed (if any)
 	routes, err := FindExecutablePaths(logfileName)
 	if err != nil {
-		logger.Fatal(err)
+		Fatal(err)
 	}
 	if len(routes) > 0 {
 		fmt.Println("Files that will be executed if accessed: ")
@@ -563,6 +577,6 @@ func main() {
 	addr := ":" + strconv.FormatInt(port, 10)
 	if err = http.ListenAndServe(addr, handler); err != nil {
 		logger.Println("Make sure you are only running one instance of QuickServ!")
-		logger.Fatal(err)
+		Fatal(err)
 	}
 }
