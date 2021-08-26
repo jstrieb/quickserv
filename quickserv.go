@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
+	"embed"
 	"flag"
 	"fmt"
 	"io"
@@ -32,6 +33,9 @@ import (
 
 var logger *log.Logger
 var noPause bool
+
+//go:embed favicon.ico
+var embedFS embed.FS
 
 /******************************************************************************
  * Helper Functions
@@ -437,6 +441,35 @@ func FindExecutablePaths(logfileName string) (map[string]string, error) {
 	return routes, err
 }
 
+// ServeStaticFile serves static files in one of two ways. First, it tries to
+// find a default file in the embedded filesystem. If that doesn't work, it
+// falls back on the input fileserver.
+func ServeStaticFile(local http.Handler, reqPath string, w http.ResponseWriter, r *http.Request) {
+	reqPath = strings.TrimPrefix(reqPath, "/")
+
+	f, err := embedFS.Open(reqPath)
+	if err != nil {
+		logger.Println(err)
+		// If we can't open the file, let the FileServer handle it correctly
+		local.ServeHTTP(w, r)
+		return
+	}
+	defer f.Close()
+
+	d, err := f.Stat()
+	if err != nil {
+		logger.Println(err)
+		// If we can't open the file, let the FileServer handle it correctly
+		local.ServeHTTP(w, r)
+		return
+	}
+
+	logger.Printf("Serving default file %v\n", reqPath)
+
+	// See: https://github.com/golang/go/issues/44175#issuecomment-775545730
+	http.ServeContent(w, r, reqPath, d.ModTime(), f.(io.ReadSeeker))
+}
+
 // NewMainHandler returns an http.Handler that looks at the file a user requests
 // and decides whether to execute it, or pass it to an http.FileServer.
 func NewMainHandler(filesystem http.FileSystem) http.Handler {
@@ -460,17 +493,19 @@ func NewMainHandler(filesystem http.FileSystem) http.Handler {
 		// Open the path in the filesystem for further inspection
 		f, err := filesystem.Open(reqPath)
 		if err != nil {
-			// If we can't open the file, let the FileServer handle it correctly
 			logger.Println(err)
-			fileserver.ServeHTTP(w, r)
+			// If we can't open the file, try to serve a default version or let
+			// the FileServer handle it correctly
+			ServeStaticFile(fileserver, reqPath, w, r)
 			return
 		}
 		defer f.Close()
 		d, err := f.Stat()
 		if err != nil {
 			logger.Println(err)
-			// If we can't open the file, let the FileServer handle it correctly
-			fileserver.ServeHTTP(w, r)
+			// If we can't open the file, try to serve a default version or let
+			// the FileServer handle it correctly
+			ServeStaticFile(fileserver, reqPath, w, r)
 			return
 		}
 
