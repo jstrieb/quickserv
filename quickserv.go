@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"crypto/rand"
@@ -55,7 +56,7 @@ func NewLogFile(logfileName string) *log.Logger {
 		}
 		defer logfile.Close()
 		if abspath, err := filepath.Abs(logfileName); err == nil {
-			fmt.Printf("Logging to folder:\n%v\n", abspath)
+			fmt.Printf("Logging to file:\n%v\n\n", abspath)
 		} else {
 			log.Fatal(err)
 		}
@@ -176,21 +177,57 @@ func IsWSL() bool {
 	return false
 }
 
+// GetShebang returns the shebang of the input path if possible. If there is no
+// shebang, or if the input path is invalid, the empty string is returned.
+func GetShebang(path string) string {
+	f, err := http.Dir(".").Open(path)
+	if err != nil {
+		logger.Println(err)
+		logger.Printf("Can't open file %v to get get shebang.\n", path)
+		return ""
+	}
+	defer f.Close()
+
+	stat, err := f.Stat()
+	if err != nil || stat.IsDir() {
+		return ""
+	}
+
+	reader := bufio.NewReader(f)
+	firstLine, err := reader.ReadBytes('\n')
+	if err != nil && err != io.EOF {
+		logger.Println(err)
+		logger.Printf("Can't read the first line of file %v to get get shebang.\n", path)
+		return ""
+	}
+
+	r, err := regexp.Compile(`^#!\S.*`)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	result := r.Find(firstLine)
+	return strings.TrimPrefix(string(result), "#!")
+}
+
 // IsPathExecutable returns whether or not a given file is executable based on
-// its path and/or its permission bits (depending on the operating system).
+// its file extension and permission bits (depending on the operating system),
+// and/or its shebang-style first line (irrespective of operating system).
 //
-// On Windows, a file is executable if and only if it has a file extension of
-// "exe" or "bat." On other operating systems, any file with the execute bit set
-// for at least one user is deemed executable.
+// On Windows, a file is executable if it has a file extension of "exe," "bat,"
+// or "cmd." On other operating systems, any file with the execute bit set for
+// at least one user is deemed executable.
+//
+// On all operating systems, if a file begins with a shebang (starting with "#!"
+// and an executable path), it is deemed executable.
 //
 // NOTE: This function may not return accurate results if given a directory as
 // input. This has not been extensively tested.
 func IsPathExecutable(path string, fileinfo fs.FileInfo) bool {
-	goos := runtime.GOOS
-
 	// Check if we are in Windows Subsystem for Linux. If so, behave differently
 	// since it's Linux but we can run .exe files, and since the permission bits
 	// are all messed up such that everything will be viewed as executable.
+	goos := runtime.GOOS
 	if IsWSL() {
 		goos = "wsl"
 	}
@@ -205,9 +242,8 @@ func IsPathExecutable(path string, fileinfo fs.FileInfo) bool {
 
 	case "wsl":
 		// Register executable handlers based on file extension
-		// TODO: Add more filenames? Or perhaps improve executable detection?
 		switch strings.ToLower(filepath.Ext(path)) {
-		case ".exe", ".sh", ".py":
+		case ".exe":
 			return true
 		}
 
@@ -219,7 +255,7 @@ func IsPathExecutable(path string, fileinfo fs.FileInfo) bool {
 		}
 	}
 
-	return false
+	return GetShebang(path) != ""
 }
 
 // ExecutePath executes the file at the path, passes the request body via
@@ -244,17 +280,31 @@ func ExecutePath(ctx context.Context, execPath string, w http.ResponseWriter, r 
 	}
 	dir, _ := filepath.Split(abspath)
 
+	var cmd *exec.Cmd
+	if shebang := GetShebang(execPath); shebang == "" {
+		cmd = exec.Command(abspath)
+	} else {
+		// Poorly parse the shebang. Follow the Linux convention of passing
+		// everything in the shebang (after the executable absolute path) as a
+		// single argument. It's easier to parse this way instead of properly
+		// shlexing. See:
+		// http://mail-index.netbsd.org/netbsd-users/2008/11/09/msg002388.html
+		splitShebang := strings.SplitN(shebang, " ", 2)
+		if len(splitShebang) > 1 {
+			cmd = exec.Command(splitShebang[0], splitShebang[1], abspath)
+		} else {
+			cmd = exec.Command(splitShebang[0], abspath)
+		}
+	}
+
 	// Create the command using all environment variables. Include a
 	// REQUEST_METHOD environment variable in imitation of CGI
-	//
+	cmd.Env = append(os.Environ(), "REQUEST_METHOD="+r.Method)
+
 	// I tried to do exec.CommandContext here, but it doesn't kill child
 	// processes, so anything run from a script keeps on going when the
 	// connection terminates. Instead I use a goroutine listening to the context
-	// with a custom package below.
-	cmd := exec.Command(abspath)
-	cmd.Env = append(os.Environ(), "REQUEST_METHOD="+r.Method)
-
-	// Make the process children killable
+	// with a custom package to make the process children killable.
 	killfam.Augment(cmd)
 
 	// Pass headers as environment variables in imitation of CGI
@@ -385,7 +435,7 @@ func FindIndexFile(dir string) (string, bool) {
 	}
 	for _, file := range files {
 		filename := file.Name()
-		if IsPathExecutable(filename, file) &&
+		if IsPathExecutable(path.Clean(dir+"/"+filename), file) &&
 			strings.ToLower(strings.TrimSuffix(filename, path.Ext(filename))) == "index" {
 			return path.Join(dir, filename), true
 		}
