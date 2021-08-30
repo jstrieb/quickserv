@@ -183,7 +183,7 @@ func GetShebang(path string) string {
 	f, err := http.Dir(".").Open(path)
 	if err != nil {
 		logger.Println(err)
-		logger.Printf("Can't open file %v to get get shebang.\n", path)
+		logger.Printf("Can't open file %v to get get first line.\n", path)
 		return ""
 	}
 	defer f.Close()
@@ -197,7 +197,7 @@ func GetShebang(path string) string {
 	firstLine, err := reader.ReadBytes('\n')
 	if err != nil && err != io.EOF {
 		logger.Println(err)
-		logger.Printf("Can't read the first line of file %v to get get shebang.\n", path)
+		logger.Printf("Can't read the first line of file %v to get get first line.\n", path)
 		return ""
 	}
 
@@ -376,7 +376,7 @@ func ExecutePath(ctx context.Context, execPath string, w http.ResponseWriter, r 
 	stderr, err := cmd.StderrPipe()
 	if err != nil {
 		logger.Println(err)
-		logger.Println("Couldn't get stderr output to print.")
+		logger.Println("Couldn't get stderr output for printing.")
 		http.Error(w, http.StatusText(500), 500)
 		return
 	}
@@ -393,7 +393,7 @@ func ExecutePath(ctx context.Context, execPath string, w http.ResponseWriter, r 
 	go func() {
 		select {
 		case <-ctx.Done():
-			logger.Println("User disconnected. Killing process.")
+			logger.Println("User disconnected. Killing program.")
 			if err := killfam.KillTree(cmd); err != nil {
 				logger.Println(err)
 			}
@@ -543,7 +543,6 @@ func NewMainHandler(filesystem http.FileSystem) http.Handler {
 		// Open the path in the filesystem for further inspection
 		f, err := filesystem.Open(reqPath)
 		if err != nil {
-			logger.Println(err)
 			// If we can't open the file, try to serve a default version or let
 			// the FileServer handle it correctly
 			ServeStaticFile(fileserver, reqPath, w, r)
@@ -552,7 +551,6 @@ func NewMainHandler(filesystem http.FileSystem) http.Handler {
 		defer f.Close()
 		d, err := f.Stat()
 		if err != nil {
-			logger.Println(err)
 			// If we can't open the file, try to serve a default version or let
 			// the FileServer handle it correctly
 			ServeStaticFile(fileserver, reqPath, w, r)
@@ -579,8 +577,8 @@ func NewMainHandler(filesystem http.FileSystem) http.Handler {
 				defer fNew.Close()
 				d, err = fNew.Stat()
 				if err != nil {
-					logger.Println(err)
 					// If we can't open the file, let the FileServer handle it correctly
+					logger.Println(err)
 					fileserver.ServeHTTP(w, r)
 					return
 				}
@@ -637,10 +635,12 @@ func main() {
 			}
 		}
 	} else {
-		fmt.Println("No files will be executed if accessed!")
-		fmt.Println("To make a file executable on Mac or Linux, run \"chmod +x filename\" from the Terminal.")
-		fmt.Println("On Windows only .bat and .exe files will be executed.")
-		fmt.Println("When accessed, non-executable files will be viewed by the user instead of being run.")
+		logger.Println("No executable files found!")
+		fmt.Println(`
+To make a script executable: start the first line with "#!xxx" where "xxx" is
+the command to run the script. For example, if you normally run your code with
+"python3 myfile.py" make the first line of myfile.py be "#!python3" (without
+quotation marks).`)
 		// TODO
 		// fmt.Println("For more information see the documentation here: TODO")
 	}
@@ -653,8 +653,7 @@ func main() {
 	localIP := GetLocalIP()
 	logger.Println("Starting a server...")
 	fmt.Printf("Visit http://%v:%v to access the server from the local network.\n", localIP, port)
-	fmt.Println("Press Control + C to stop the server.")
-	fmt.Println()
+	fmt.Println("Press Control + C or close this window to stop the server.\n")
 
 	// Build a handler that decides whether to serve static files or dynamically
 	// execute them
