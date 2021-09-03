@@ -54,7 +54,6 @@ func NewLogFile(logfileName string) *log.Logger {
 		if err != nil {
 			log.Fatal(err)
 		}
-		defer logfile.Close()
 		if abspath, err := filepath.Abs(logfileName); err == nil {
 			fmt.Printf("Logging to file:\n%v\n\n", abspath)
 		} else {
