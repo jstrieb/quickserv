@@ -196,7 +196,7 @@ func GetShebang(path string) string {
 	firstLine, err := reader.ReadBytes('\n')
 	if err != nil && err != io.EOF {
 		logger.Println(err)
-		logger.Printf("Can't read the first line of file %v to get get first line.\n", path)
+		logger.Printf("Can't read file %v to get get first line.\n", path)
 		return ""
 	}
 
