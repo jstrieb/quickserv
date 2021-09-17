@@ -148,8 +148,11 @@ Enter the following commands. A password may be required for the first command.
 # Download
 sudo curl \
     --location \
-    --output /usr/local/bin/quickserv 
+    --output /usr/local/bin/quickserv \
     https://github.com/jstrieb/quickserv/releases/latest/download/quickserv_raspi_x64
+
+# Make executable
+sudo chmod +x /usr/local/bin/quickserv
 
 # Make a project folder
 mkdir -p my/project/folder
@@ -181,9 +184,9 @@ your web application. For example, to run `test.py`, go to
 <summary>Click to view details</summary>
 
 Clicking to run executables does not have consistent behavior across Linux
-distros, so it's easiest to install and run via the command line. It may be
-necessary to change the filename at the end of the `curl` HTTP request URL
-below.
+distros, so it's easiest to install and run via the command line. Depending 
+on  your computer's architecture, it may be necessary to change the filename 
+at the end of the `curl` HTTP request URL below.
 
 See all download options on the [releases
 page](https://github.com/jstrieb/quickserv/releases/latest).
@@ -192,8 +195,11 @@ page](https://github.com/jstrieb/quickserv/releases/latest).
 # Download
 sudo curl \
     --location \
-    --output /usr/local/bin/quickserv 
+    --output /usr/local/bin/quickserv \
     https://github.com/jstrieb/quickserv/releases/latest/download/quickserv_linux_x64
+
+# Make executable
+sudo chmod +x /usr/local/bin/quickserv
 
 # Make a project folder
 mkdir -p /my/project/folder
