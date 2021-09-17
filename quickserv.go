@@ -42,7 +42,10 @@ var embedFS embed.FS
  * Helper Functions
  *****************************************************************************/
 
-// NewLogFile initializes the logfile relative to the initial working directory.
+// NewLogFile initializes the logfile relative to the current working directory.
+// As such, for the log file path to be relative to the initial working
+// directory, this function must be called before the working directory is
+// changed.
 func NewLogFile(logfileName string) *log.Logger {
 	var logfile *os.File
 	if logfileName == "-" {
