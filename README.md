@@ -62,6 +62,10 @@ to execute, and which to serve directly to the user.
    print(random.randint(0, 420))
    ```
 
+   <div align="center">
+   <img src="doc/windows_2.png" width="75%" align="center">
+   </div>
+
    Since `test.py` starts with `#!something`, where `something test.py` is the
    command to execute the file, QuickServ will know to run it. If QuickServ is
    not running your file, make sure to add this to the beginning. 
@@ -72,16 +76,27 @@ to execute, and which to serve directly to the user.
 
 3. Move the downloaded `quickserv_windows_x64.exe` file to the project folder.
 
-   <!-- TODO image -->
+   <div align="center">
+   <img src="doc/windows_3.png" width="75%" align="center">
+   </div>
 
 4. Double click `quickserv_windows_x64.exe` in the project folder to start
-   QuickServ.
+   QuickServ. It may be necessary to allow access through Windows Defender if
+   prompted.
 
-   <!-- TODO image -->
+   <div align="center">
+   <img src="doc/windows_4_1.png" width="75%" align="center"><br><br>
+
+   <img src="doc/windows_4_2.png" width="90%" align="center">
+   </div>
 
 5. Go to <http://127.0.0.1:42069> (or the address shown by QuickServ) to connect
    to your web application. In the example, to run `test.py`, go to
    <http://127.0.0.1:42069/test.py>.
+
+   <div align="center">
+   <img src="doc/windows_5.png" width="75%" align="center">
+   </div>
 
 </details>
 
@@ -136,11 +151,8 @@ to execute, and which to serve directly to the user.
 <details>
 <summary>Click to view details</summary>
 
-<!-- TODO -->
-
-It's easiest to install and run via the command line. Open the Terminal.
-
-<!-- TODO Image -->
+It's easiest to install and run via the command line. [Open the
+Terminal](https://projects.raspberrypi.org/en/projects/raspberry-pi-using/8).
 
 Enter the following commands. A password may be required for the first command. 
 
