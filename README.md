@@ -1,9 +1,9 @@
-# QuickServ
+# **QuickServ**
 
 **Quick**, no-setup web **Serv**er
 
 
-## About
+# About
 
 QuickServ makes creating web applications [*dangerously*](#disclaimer) easy, no
 matter what programming language you use. QuickServ:
@@ -38,13 +38,13 @@ It is perfect for:
 [QuickServ should not be used on the open Internet.](#disclaimer) 
 
 
-## Get Started
+# Get Started
 
 Using QuickServ is as easy as downloading the program, dragging it to your
 project folder, and double clicking to run. It automatically detects which files
 to execute, and which to serve directly to the user. 
 
-### Windows
+## Windows
 
 <details>
 <summary>Click to view details</summary>
@@ -85,7 +85,7 @@ to execute, and which to serve directly to the user.
 
 </details>
 
-### Mac
+## Mac
 
 <details>
 <summary>Click to view details</summary>
@@ -96,7 +96,7 @@ to execute, and which to serve directly to the user.
    Mac](https://github.com/jstrieb/quickserv/releases/latest/download/quickserv_macos_arm).
 
 2. Make a project folder and add files to it. For example, if Python is
-   installed, create a file called `test.py` in thet project folder containing:
+   installed, create a file called `test.py` in the project folder containing:
 
    ``` python
    #!python
@@ -131,7 +131,7 @@ to execute, and which to serve directly to the user.
 
 </details>
 
-### Raspberry Pi
+## Raspberry Pi
 
 <details>
 <summary>Click to view details</summary>
@@ -178,7 +178,7 @@ your web application. For example, to run `test.py`, go to
 
 </details>
 
-### Others
+## Others
 
 <details>
 <summary>Click to view details</summary>
@@ -226,26 +226,26 @@ your web application. For example, to run `test.py`, go to
 </details>
 
 
-## Examples
+# Examples
 
 TODO
 
 
-## How It Works & How To Read This Code
-
-<details>
-<summary>Click to view details</summary>
+# How It Works
 
 All of the QuickServ code lives in
 [`quickserv.go`](https://github.com/jstrieb/quickserv/blob/master/quickserv.go).
 This well-commented file is less than 700 lines long, and should take an
 experienced programmer with no Golang familiarity at most an hour to read.
 
+<details>
+<summary>Click to view details</summary>
+
 QuickServ has two main parts. The first is an initialization procedure, run
 exactly once at startup. The second is a handler function, called every time a
 user makes an HTTP request to the server.
 
-### Initialization Routine
+## Initialization Routine
 
 When QuickServ starts up, it checks for command-line configuration flags, opens
 a log file if one is passed with `--logfile` (otherwise it logs to the standard
@@ -274,10 +274,10 @@ fix.
 As the last step in the initialization procedure, QuickServ starts a web server
 with a single handler function for all requests. The server listens on the
 default port of `42069`, or on a random port if a user specified the
-`--random-port` command-line flag. They might use a random port if they have to
-show a project built with QuickServ to someone humorless, for example.
+`--random-port` command-line flag. A random port would be desirable if the user
+has to show a project built with QuickServ to someone humorless, for example.
 
-### Request Handler
+## Request Handler
 
 When a user visits a web page, QuickServ handles the request by calling the lone
 handler function.
@@ -298,29 +298,31 @@ If the file the user requested is present and not a directory (_i.e._, it is a
 regular file), or is the index of a directory, QuickServ checks whether or not
 it is executable. If so, it executes the file it found. If not, it returns the
 raw file contents to the user. In both cases, QuickServ will try and guess what
-filetype (and therefore which `mimetype` to use).
+filetype (and therefore which `mimetype`) to use for the response.
 
 The technique for determining if a file is executable depends on the runtime
 operating system. On Windows, any file with a `.bat` or `.exe` extension is
 considered executable. On non-Windows systems, any file with the executable
-permission bit set is considered executable. On all systems, if none of the
-other conditions are met, a file is executable if and only if it has a valid
-pseudo-shebang at the beginning. The shebang must be on the very first line,
-must begin with `#!`, and must be a valid command. For example, both of the
-following are acceptable, assuming `python3` is installed and on the `PATH`:
+permission bit set is considered executable. On all systems, a file is
+executable if it has a valid pseudo-shebang at the beginning. The shebang must
+be on the very first line, must begin with `#!`, and must be a valid command.
+For example, both of the following are acceptable, assuming `python3` is
+installed and on the `PATH`:
 
 - `#!/usr/bin/python3`
 - `#!python3`
 
-To execute a file, QuickServ either runs the file itself, or passes its path as
-the first argument to the executable listed in its shebang. When it runs, the
-request body is passed on standard input, and everything printed on standard
-output is used as the response body. Executed programs are neither responsible
-for writing—nor able to write—HTTP response headers. Whatever the program prints
-on standard error is logged by QuickServ, which means it gets printed in the
-console window by default. This is handy for debugging. If the program
-terminates with a non-zero exit code, QuickServ responds with a 500 internal
-server error. Otherwise it returns with a 200.
+To execute a file, QuickServ either runs the file itself, or passes the file's
+path as the first argument to the executable listed in its shebang. 
+The request body is passed to the program on standard input, and everything
+printed by the program on standard output is used as the response body. Executed
+programs are neither responsible for writing—nor able to write—HTTP response
+headers. 
+
+Whatever the program prints on standard error is logged by QuickServ, which
+means it gets printed in the console window by default. This is handy for
+debugging. If the program terminates with a non-zero exit code, QuickServ
+responds with a 500 internal server error. Otherwise it returns with a 200.
 
 If the request is a URL-encoded POST request with form data, QuickServ
 URL-decodes all of the characters except for three symbols: `%`, `&`, and `=`.
@@ -330,7 +332,7 @@ always URL-decode `%` last in the program that processes the form data.
 </details>
 
 
-## Disclaimer
+# Disclaimer
 
 Do not run QuickServ on the public Internet. Only run it on private networks.
 
@@ -355,7 +357,7 @@ production](https://www.embedthis.com/blog/posts/stop-using-cgi/stop-using-cgi.h
 and they all apply to QuickServ in production.
 
 
-## Advanced
+# Advanced
 
 QuickServ has advanced options configured via command line flags. These
 change how and where QuickServ runs, as well as where it saves its output.
@@ -377,7 +379,7 @@ Options:
 
 
 <!--
-## Motivation & Philosophy
+# Motivation & Philosophy
 
 The idea came from spending way too much time getting set up during a hackathon
 with friends in college.
@@ -391,7 +393,22 @@ At home, I constantly use it to give my shell scripts simple web front-ends.
 -->
 
 
-## Support the Project
+# Project Status & Contributing
+
+This project is actively developed and maintained. If there are no recent
+commits, it means that everything is running smoothly!
+
+Please [open an issue](https://github.com/jstrieb/quickserv/issues/new) with any
+bugs, suggestions, or questions. This includes discussions as basic as how to
+make error messages as clear as possible.
+
+Pull requests without prior discussion will be ignored – don't waste time
+writing code before confirming that it will be merged in. As a busy, lone
+developer, it is easier to be responsive when all code contributions have
+context.
+
+
+# Support the Project
 
 There are a few ways to support the project:
 
@@ -414,7 +431,7 @@ comfortable releasing work publicly on the Web.
 - [The Internet Archive](https://archive.org/donate/index.php)
 
 
-## Acknowledgments
+# Acknowledgments
 
 This project would not be possible without the help and support of:
 
