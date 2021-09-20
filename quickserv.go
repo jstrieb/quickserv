@@ -33,7 +33,8 @@ import (
  *****************************************************************************/
 
 var logger *log.Logger
-var noPause bool
+var noPause, randomPort bool
+var logfileName, wd string
 
 //go:embed favicon.ico
 var embedFS embed.FS
@@ -642,16 +643,16 @@ func NewMainHandler(filesystem http.FileSystem) http.Handler {
  * Main Function
  *****************************************************************************/
 
-func main() {
+func init() {
 	// Parse command line arguments
-	var logfileName, wd string
-	var randomPort bool
 	flag.StringVar(&logfileName, "logfile", "-", "Log file path. Stdout if unspecified.")
 	flag.StringVar(&wd, "dir", ".", "Folder to serve files from.")
 	flag.BoolVar(&randomPort, "random-port", false, "Use a random port instead of 42069.")
 	flag.BoolVar(&noPause, "no-pause", false, "Don't pause before exiting after fatal error.")
 	flag.Parse()
+}
 
+func main() {
 	logger = NewLogFile(logfileName)
 
 	// Switch directories and print the current working directory
