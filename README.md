@@ -81,8 +81,7 @@ to execute, and which to serve directly to the user.
    </div>
 
 4. Double click `quickserv_windows_x64.exe` in the project folder to start
-   QuickServ. It may be necessary to allow access through Windows Defender if
-   prompted.
+   QuickServ. Allow access through Windows Defender if prompted.
 
    <div align="center">
    <img src="doc/windows_4_1.png" width="75%" align="center"><br><br>
@@ -146,9 +145,9 @@ to execute, and which to serve directly to the user.
    the project folder.
 
 4. Right click `quickserv_macos_x64` or `quickserv_macos_arm` in the project
-   folder and select "Open." Then, press "Okay" in the confirmation dialog box. 
-   After this, you will be able to start QuickServ by simply double-clicking the 
-   file.
+   folder and select "Open." Then, press "Open" in the confirmation dialog box. 
+   After running it this way once, you will be able to start QuickServ by simply
+   double-clicking the file.
 
    <div align="center">
    <img src="doc/macos_4_1.png" width="75%" align="center"><br><br>
@@ -174,7 +173,7 @@ to execute, and which to serve directly to the user.
 It's easiest to install and run via the command line. [Open the
 Terminal](https://projects.raspberrypi.org/en/projects/raspberry-pi-using/8).
 
-Enter the following commands. A password may be required for the first command. 
+Enter the following commands. A password may be required for the first commands. 
 
 ``` bash
 # Download
