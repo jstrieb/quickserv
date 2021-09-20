@@ -179,6 +179,47 @@ func IsWSL() bool {
 	return false
 }
 
+// ChangeDirIfMacOS changes the working directory to the location of the
+// QuickServ executable. This happens only on MacOS if the executable is running
+// in the user's home directory, when the executable was called using an
+// absolute path, and when the "--dir" flag is not the default. These fairly
+// unique set of circumstances occur when a binary is double-clicked on MacOS,
+// and is a rough heuristic to detect this.
+//
+// This irritating procedure is necessary because all double-clicked binaries
+// are run with the home directory as the working directory.
+func ChangeDirIfMacOS(dirFlag string) {
+	if runtime.GOOS != "darwin" || dirFlag != "." {
+		return
+	}
+
+	exePath := os.Args[0]
+	if !filepath.IsAbs(exePath) {
+		return
+	}
+
+	wd, err := os.Getwd()
+	if err != nil {
+		Fatal(err)
+	}
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		Fatal(err)
+	}
+	absHome, err := filepath.Abs(homeDir)
+	if err != nil {
+		Fatal(err)
+	}
+	if wd != absHome {
+		return
+	}
+
+	exeDir, _ := filepath.Split(exePath)
+	if err := os.Chdir(filepath.Clean(exeDir)); err != nil {
+		Fatal(err)
+	}
+}
+
 // GetShebang returns the shebang of the input path if possible. If there is no
 // shebang, or if the input path is invalid, the empty string is returned.
 func GetShebang(path string) string {
@@ -209,7 +250,9 @@ func GetShebang(path string) string {
 	}
 
 	result := r.Find(firstLine)
-	return strings.TrimPrefix(string(result), "#!")
+
+	// Trim carriage returns added by Windows
+	return strings.TrimSuffix(strings.TrimPrefix(string(result), "#!"), "\r")
 }
 
 // IsPathExecutable returns whether or not a given file is executable based on
@@ -454,7 +497,7 @@ func FindExecutablePaths(logfileName string) (map[string]string, error) {
 
 	err := filepath.WalkDir(".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
-			return err
+			return nil
 		}
 
 		// Clean up the path and format it HTTP-style
@@ -469,8 +512,7 @@ func FindExecutablePaths(logfileName string) (map[string]string, error) {
 			logger.Printf("Couldn't get file info for %v.\n", filename)
 			return nil
 		}
-		switch strings.ToLower(filename) {
-		case "quickserv", "quickserv.exe", logfileName:
+		if f := strings.ToLower(filename); f == logfileName || strings.HasPrefix(f, "quickserv_") {
 			return nil
 		}
 
@@ -613,6 +655,7 @@ func main() {
 	logger = NewLogFile(logfileName)
 
 	// Switch directories and print the current working directory
+	ChangeDirIfMacOS(wd)
 	if err := os.Chdir(wd); err != nil {
 		Fatal(err)
 	}
