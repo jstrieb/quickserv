@@ -105,10 +105,13 @@ to execute, and which to serve directly to the user.
 <details>
 <summary>Click to view details</summary>
 
-1. [Download for Intel
-   Mac](https://github.com/jstrieb/quickserv/releases/latest/download/quickserv_macos_x64). 
-   [Download for Arm 
-   Mac](https://github.com/jstrieb/quickserv/releases/latest/download/quickserv_macos_arm).
+1. Download the right version for your computer. If necessary, [check what type
+   of processor your Mac
+   has](https://www.howtogeek.com/706226/how-to-check-if-your-mac-is-using-an-intel-or-apple-silicon-processor/).
+   - [Download for
+     Intel](https://github.com/jstrieb/quickserv/releases/latest/download/quickserv_macos_x64).
+   - [Download for Apple
+     Silicon](https://github.com/jstrieb/quickserv/releases/latest/download/quickserv_macos_arm).
 
 2. Make a project folder and add files to it. For example, if Python is
    installed, create a file called `test.py` in the project folder containing:
@@ -119,6 +122,17 @@ to execute, and which to serve directly to the user.
    import random
    print(random.randint(0, 420))
    ```
+
+   <div align="center">
+   <img src="doc/macos_2_2.png" width="75%" align="center">
+   </div>
+   
+   If you are making the file with TextEdit, you will need to go into `Format >
+   Make Text Plain` to save the file in the correct format. 
+
+   <div align="center">
+   <img src="doc/macos_2_1.png" width="75%" align="center">
+   </div>
 
    Since `test.py` starts with `#!something`, where `something test.py` is the
    command to execute the file, QuickServ will know to run it. If QuickServ is
@@ -131,18 +145,24 @@ to execute, and which to serve directly to the user.
 3. Move the downloaded `quickserv_macos_x64` or `quickserv_macos_arm` file to
    the project folder.
 
-   <!-- TODO image -->
-
 4. Right click `quickserv_macos_x64` or `quickserv_macos_arm` in the project
    folder and select "Open." Then, press "Okay" in the confirmation dialog box. 
    After this, you will be able to start QuickServ by simply double-clicking the 
    file.
 
-   <!-- TODO image -->
+   <div align="center">
+   <img src="doc/macos_4_1.png" width="75%" align="center"><br><br>
+   <img src="doc/macos_4_2.png" width="30%" align="center"><br><br>
+   <img src="doc/macos_4_3.png" width="75%" align="center">
+   </div>
 
 5. Go to <http://127.0.0.1:42069> (or the address shown by QuickServ) to connect
    to your web application. In the example, to run `test.py`, go to
    <http://127.0.0.1:42069/test.py>.
+
+   <div align="center">
+   <img src="doc/macos_5.png" width="75%" align="center">
+   </div>
 
 </details>
 
