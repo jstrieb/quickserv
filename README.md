@@ -1,3 +1,5 @@
+<img src="favicon.svg" width="125" height="125" align="left">
+
 # **QuickServ** 
 
 **Quick**, no-setup web **Serv**er
