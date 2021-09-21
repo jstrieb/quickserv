@@ -1,4 +1,4 @@
-# **QuickServ**
+# **QuickServ** 
 
 **Quick**, no-setup web **Serv**er
 
@@ -15,6 +15,7 @@ matter what programming language you use. QuickServ:
 - Knows which files to run server-side, and which to serve plain
 - Works with any programming language that can `read` and `write`
 - Doesn't require understanding the intricacies of HTTP
+- Enables Cross Origin Request Sharing (CORS) by default
 
 QuickServ brings the heady fun of the 1990s Internet to the 2020s. It is
 inspired by the [Common Gateway Interface
@@ -127,7 +128,7 @@ to execute, and which to serve directly to the user.
    </div>
    
    If you are making the file with TextEdit, you will need to go into `Format >
-   Make Text Plain` to save the file in the correct format. 
+   Make Plain Text` to save the file in the correct format. 
 
    <div align="center">
    <img src="doc/macos_2_1.png" width="75%" align="center">
@@ -180,7 +181,7 @@ Enter the following commands. A password may be required for the first commands.
 sudo curl \
     --location \
     --output /usr/local/bin/quickserv \
-    https://github.com/jstrieb/quickserv/releases/latest/download/quickserv_raspi_x64
+    https://github.com/jstrieb/quickserv/releases/latest/download/quickserv_raspi_arm
 
 # Make executable
 sudo chmod +x /usr/local/bin/quickserv
@@ -282,20 +283,19 @@ When QuickServ starts up, it checks for command-line configuration flags, opens
 a log file if one is passed with `--logfile` (otherwise it logs to the standard
 output), and changes directories if a working directory is passed with `--dir`.
 Note that the log file path is relative to the current working directory, not
-the one passed with `--dir`.
+relative to the one passed with `--dir`.
 
-Next, QuickServ scans the working directory looking for files to run, and prints
-all of the files that will be executed. This behavior is useful for helping
-users determine if QuickServ recognizes their script as executable. It also
-prints helpful information for the user such as what web address to visit to
-access the server, as well as what folder the server is running in, and how to
-stop it.
+Next, QuickServ scans the working directory for files to run. It prints all of
+the files that will be executed. This behavior is useful for determining if
+QuickServ recognizes a script as executable. It also prints helpful information
+for the user such as the web address to visit to access the server, and what
+folder the server is running in, as well as how to stop it.
 
 If any part of the initialization fails, an error is reported. In the event of a
-fatal error, QuickServ waits for user input before quitting. This is so that a
-user who double-clicks the executable (as opposed to starting it from the
-command line) does not have a window appear and then immediately disappear,
-flashing too quickly for the error to be read.
+fatal error, QuickServ waits for user input before quitting. This way, a user
+who double-clicks the executable (as opposed to starting it from the command
+line) does not have a window appear and then immediately disappear, flashing too
+quickly for the error to be read.
 
 Error messages are purposefully written with as little technical jargon as
 possible, though some is unavoidable. Likely causes for the errors are also
@@ -321,15 +321,16 @@ the error and respond with a 404 error code.
 
 If the file the user requested is present, it checks whether it is a directory.
 If it is a directory, QuickServ looks inside for a file named `index.xxx` where
-`xxx` is any file extension. If an index file is found, that page is served.
-Otherwise, the user must have requested a directory without a default index, so
-QuickServ responds with a page showing the other files in the directory.
+`xxx` is any file extension. If an index file is found, the index is served (and
+possibly executed) as if it were the original page requested. Otherwise, the
+user must have requested a directory without a default index, so QuickServ
+responds with a listing of the other files in the directory.
 
 If the file the user requested is present and not a directory (_i.e._, it is a
-regular file), or is the index of a directory, QuickServ checks whether or not
-it is executable. If so, it executes the file it found. If not, it returns the
-raw file contents to the user. In both cases, QuickServ will try and guess what
-filetype (and therefore which `mimetype`) to use for the response.
+regular file), QuickServ checks whether or not it is executable. If so, it
+executes the file it found. If not, it returns the raw file contents to the
+user. In both cases, QuickServ will guess what filetype (and therefore which
+`mimetype`) to use for the response.
 
 The technique for determining if a file is executable depends on the runtime
 operating system. On Windows, any file with a `.bat` or `.exe` extension is
@@ -343,15 +344,15 @@ installed and on the `PATH`:
 - `#!/usr/bin/python3`
 - `#!python3`
 
-To execute a file, QuickServ either runs the file itself, or passes the file's
-path as the first argument to the executable listed in its shebang. 
-The request body is passed to the program on standard input, and everything
-printed by the program on standard output is used as the response body. Executed
-programs are neither responsible for writing—nor able to write—HTTP response
-headers. 
+To execute a file, QuickServ either runs the file itself (if it is an `.exe` or
+has the executable bit set), or it passes the file's path as the first argument
+to the executable listed in its shebang. The request body is passed to the
+program on standard input, and everything printed by the program on standard
+output is used as the response body. Executed programs are neither responsible
+for writing—nor able to write—HTTP response headers. 
 
-Whatever the program prints on standard error is logged by QuickServ, which
-means it gets printed in the console window by default. This is handy for
+Whatever the executed program prints on standard error is logged by QuickServ,
+which means it gets printed in the console window by default. This is handy for
 debugging. If the program terminates with a non-zero exit code, QuickServ
 responds with a 500 internal server error. Otherwise it returns with a 200.
 
@@ -430,8 +431,9 @@ This project is actively developed and maintained. If there are no recent
 commits, it means that everything is running smoothly!
 
 Please [open an issue](https://github.com/jstrieb/quickserv/issues/new) with any
-bugs, suggestions, or questions. This includes discussions as basic as how to
-make error messages as clear as possible.
+bugs, suggestions, or questions. This especially includes discussions about how
+to make error messages as clear as possible, and how to make the default
+settings applicable to as many users as possible.
 
 Pull requests without prior discussion will be ignored – don't waste time
 writing code before confirming that it will be merged in. As a busy, lone
@@ -464,7 +466,7 @@ comfortable releasing work publicly on the Web.
 
 # Acknowledgments
 
-This project would not be possible without the help and support of:
+This project would not be possible without the help of:
 
 - [Logan Snow](https://github.com/lsnow99)
 - [Amy Liu](https://www.linkedin.com/in/amyjl/)
