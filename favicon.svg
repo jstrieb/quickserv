@@ -23,16 +23,16 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.4"
-     inkscape:cx="215.1602"
-     inkscape:cy="115.21825"
+     inkscape:zoom="2.8"
+     inkscape:cx="59.730082"
+     inkscape:cy="78.814057"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
      inkscape:window-width="1920"
      inkscape:window-height="1013"
-     inkscape:window-x="-9"
-     inkscape:window-y="-9"
+     inkscape:window-x="1015"
+     inkscape:window-y="191"
      inkscape:window-maximized="1"
      units="in"
      objecttolerance="10"
@@ -67,7 +67,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
         <dc:creator>
           <cc:Agent>
             <dc:title>Jacob Strieb</dc:title>
@@ -259,14 +259,18 @@
     <g
        id="g38106">
       <g
-         id="g38036">
+         id="g38036"
+         inkscape:export-xdpi="89.440498"
+         inkscape:export-ydpi="89.440498">
         <rect
            y="4.489583"
            x="1.302084"
            height="1.3020819"
            width="1.3020828"
            id="rect37931"
-           style="opacity:1;fill:#009090;fill-opacity:1;stroke:none;stroke-width:0.07291668;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:normal" />
+           style="opacity:1;fill:#009090;fill-opacity:1;stroke:none;stroke-width:0.07291668;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:normal"
+           rx="0.15625"
+           ry="0.15625" />
         <path
            style="opacity:1;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.00933334;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:normal"
            d="m 2.0480247,4.6406283 c -0.091194,2.403e-4 -0.1835178,0.025341 -0.2636636,0.065853 -0.1066012,0.051163 -0.1913867,0.1357764 -0.2660289,0.225521 -0.1027035,0.1302306 -0.1112998,0.3163035 -0.045291,0.464968 0.061395,0.1462457 0.2126295,0.2348599 0.3772096,0.2474251 0,0 0.032966,0.00169 0.049355,2.498e-4 0.087903,-0.00772 0.1651334,-0.0172 0.2604348,-0.047468 0.010603,0.00955 0.021718,0.018623 0.033607,0.027006 0.053787,0.043314 0.1242072,0.054911 0.1913672,0.056252 0.039169,-0.028765 0.078346,-0.057529 0.1175172,-0.086294 C 2.460238,5.5982712 2.41685,5.5963112 2.3759776,5.5840192 2.343891,5.5737758 2.315626,5.5572168 2.290178,5.5368158 2.4514119,5.4210899 2.5314351,5.1811068 2.47808,4.989544 2.4399142,4.8686716 2.3636073,4.7543909 2.2524885,4.6896613 2.1891936,4.6552927 2.1189527,4.6404413 2.0480247,4.6406283 Z m -0.1142695,0.092401 c 0.088677,0.00146 0.1779583,0.03354 0.2440009,0.091305 0.084611,0.084156 0.141303,0.1970203 0.1603375,0.3148325 C 2.3563327,5.257738 2.321944,5.3951478 2.2252361,5.4706802 2.2037046,5.4439528 2.1843242,5.415331 2.1662477,5.3872635 2.125615,5.3283505 2.0925927,5.2600053 2.0315388,5.2191068 c -0.047599,-0.034562 -0.110196,-0.025997 -0.162685,-0.00916 -0.081761,0.027838 -0.1533235,0.078226 -0.2277272,0.1209591 -0.00176,9.992e-4 -0.00364,0.00211 -0.00545,0.00314 -0.037749,-0.065958 -0.059275,-0.1388275 -0.055517,-0.2094923 0.00923,-0.1069169 0.044697,-0.2153865 0.1131575,-0.2990708 0.063676,-0.064749 0.1517588,-0.093911 0.2404356,-0.092454 z m -0.093214,0.5477666 c 0.04715,-3.298e-4 0.090835,0.027799 0.1219653,0.062184 0.048737,0.055729 0.086342,0.1215638 0.1313376,0.1807061 C 2.0357541,5.528836 1.9593739,5.552088 1.871894,5.550825 1.784414,5.549565 1.7125892,5.4437582 1.6671776,5.3825159 c 0.012996,-0.00845 0.023171,-0.019748 0.026988,-0.037331 0.00721,-0.014592 0.018269,-0.025751 0.031047,-0.035336 0.030208,-0.013535 0.061927,-0.023559 0.094942,-0.027111 0.00685,-0.00127 0.013651,-0.00189 0.020387,-0.00194 z"
