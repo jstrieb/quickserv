@@ -1,0 +1,81 @@
+# Created by Jacob Strieb
+# September, 2021
+# 
+# Based on previous work for lsnow99/dudu
+# https://git.io/JzBBK
+# 
+# This GitHub Actions workflow compiles QuickServ for several architectures and
+# generates a release on GitHub.
+
+name: Compile and Release
+
+on:
+  push:
+    tags:
+      - v*
+
+jobs:
+  build:
+    name: Compile for different operating systems and architectures, and release
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+
+
+      # QuickServ uses an embedded filesystem, so it requires a Go version
+      # greater than 1.16
+      - uses: actions/setup-go@v2
+        with: 
+          go-version: '^1.16.0'
+
+
+      - name: Setup
+        run: |
+          mkdir -p bin
+          go mod tidy
+
+
+      - name: Compile for Windows
+        run: |
+          export GOOS=windows
+          GOARCH=386 go build -o bin/quickserv_windows_x86.exe github.com/jstrieb/quickserv
+          GOARCH=amd64 go build -o bin/quickserv_windows_x64.exe github.com/jstrieb/quickserv
+
+
+      - name: Compile for MacOS
+        run: |
+          export GOOS=darwin
+          GOARCH=amd64 go build -o bin/quickserv_macos_x64 github.com/jstrieb/quickserv
+          GOARCH=arm64 go build -o bin/quickserv_macos_arm64 github.com/jstrieb/quickserv
+
+          # Zip each file up so that the permission bits are preserved after
+          # download, which matters for double-clicking on MacOS
+          cd bin
+          for f in quickserv_macos*; do
+            zip "${f}.zip" "${f}"
+          done
+
+
+      - name: Compile for Linux
+        run: |
+          export GOOS=linux
+          GOARCH=386 go build -o bin/quickserv_linux_x86 github.com/jstrieb/quickserv
+          GOARCH=amd64 go build -o bin/quickserv_linux_x64 github.com/jstrieb/quickserv
+          GOARCH=arm64 go build -o bin/quickserv_linux_arm64 github.com/jstrieb/quickserv
+          GOARCH=arm GOARM=6 go build -o bin/quickserv_raspi_arm github.com/jstrieb/quickserv
+
+
+      - name: Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd bin
+          TAG="$(git describe --tags --abbrev=0)"
+
+          gh release create \
+            "${TAG}" \
+            --notes "Pre-compiled binaries for QuickServ ${TAG}" \
+            *.exe \
+            *.zip \
+            quickserv_linux_* \
+            quickserv_raspi_*

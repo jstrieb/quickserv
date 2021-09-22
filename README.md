@@ -110,10 +110,11 @@ to execute, and which to serve directly to the user.
 1. Download the right version for your computer. If necessary, [check what type
    of processor your Mac
    has](https://www.howtogeek.com/706226/how-to-check-if-your-mac-is-using-an-intel-or-apple-silicon-processor/).
+   You will have to unzip the files after you download them.
    - [Download for
-     Intel](https://github.com/jstrieb/quickserv/releases/latest/download/quickserv_macos_x64).
+     Intel](https://github.com/jstrieb/quickserv/releases/latest/download/quickserv_macos_x64.zip).
    - [Download for Apple
-     Silicon](https://github.com/jstrieb/quickserv/releases/latest/download/quickserv_macos_arm).
+     Silicon](https://github.com/jstrieb/quickserv/releases/latest/download/quickserv_macos_arm64.zip).
 
 2. Make a project folder and add files to it. For example, if Python is
    installed, create a file called `test.py` in the project folder containing:
@@ -144,10 +145,10 @@ to execute, and which to serve directly to the user.
    compiled. Any other file type needs to start with `#!something` if it should
    be run.
 
-3. Move the downloaded `quickserv_macos_x64` or `quickserv_macos_arm` file to
+3. Move the downloaded `quickserv_macos_x64` or `quickserv_macos_arm64` file to
    the project folder.
 
-4. Right click `quickserv_macos_x64` or `quickserv_macos_arm` in the project
+4. Right click `quickserv_macos_x64` or `quickserv_macos_arm64` in the project
    folder and select "Open." Then, press "Open" in the confirmation dialog box. 
    After running it this way once, you will be able to start QuickServ by simply
    double-clicking the file.
