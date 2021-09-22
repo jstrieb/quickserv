@@ -1,4 +1,4 @@
-<img src="favicon.svg" width="125" height="125" align="left">
+<a href="https://github.com/jstrieb/quickserv"><img src="https://github.com/jstrieb/quickserv/blob/master/favicon.svg?raw=true" width="125" height="125" align="left"></a>
 
 # **QuickServ** 
 
@@ -18,6 +18,7 @@ matter what programming language you use. QuickServ:
 - Works with any programming language that can `read` and `write`
 - Doesn't require understanding the intricacies of HTTP
 - Enables Cross Origin Request Sharing (CORS) by default
+- Works without ever needing the command line
 
 QuickServ brings the heady fun of the 1990s Internet to the 2020s. It is
 inspired by the [Common Gateway Interface
@@ -263,7 +264,34 @@ your web application. For example, to run `test.py`, go to
 
 # Examples
 
-TODO
+All examples are located in the [`examples`](examples) folder, which is a git
+submodule that is connected to the
+[jstrieb/quickserv-examples](https://github.com/jstrieb/quickserv-examples)
+repo. Go to the repo for more information on how to run the examples.
+
+Some highlights:
+
+<table>
+
+<tr>
+<th>Summary</th>
+<th>Language</th>
+<th>Lines of Code</th>
+<th>Windows</th>
+<th>Mac</th>
+<th>Linux</th>
+</tr>
+
+<tr>
+<td>Summary</td>
+<td>Language</td>
+<td>Length</td>
+<td><a href=""><div align="center">✓</div></a></td>
+<td><a href=""><div align="center">✗</div></a></td>
+<td><a href=""><div align="center">✗</div></a></td>
+</tr>
+
+</table>
 
 
 # How It Works
