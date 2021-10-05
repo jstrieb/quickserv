@@ -18,7 +18,7 @@ matter what programming language you use. QuickServ:
 - Works with any programming language that can `read` and `write`
 - Doesn't require understanding the intricacies of HTTP
 - Enables Cross Origin Request Sharing (CORS) by default
-- Works without ever needing the command line
+- Works with or without the command line 
 
 QuickServ brings the heady fun of the 1990s Internet to the 2020s. It is
 inspired by the [Common Gateway Interface
@@ -35,7 +35,7 @@ It is perfect for:
 - Building hackathon projects without learning a web framework
 - Creating internal tools
 - Prototyping applications using any language
-- Giving scripts web interfaces
+- Attaching web interfaces to scripts
 - Controlling hardware with Raspberry Pis on your local network
 - Trying out web development without being overwhelmed
 
@@ -62,6 +62,7 @@ to execute, and which to serve directly to the user.
    ``` python
    #!python
 
+   # Put your code here. For example:
    import random
    print(random.randint(0, 420))
    ```
@@ -123,6 +124,7 @@ to execute, and which to serve directly to the user.
    ``` python
    #!python
 
+   # Put your code here. For example:
    import random
    print(random.randint(0, 420))
    ```
@@ -200,6 +202,7 @@ cd my/project/folder
 cat <<EOF > temp.py
 #!python3
 
+# Put your code here. For example:
 import random
 print(random.randint(0, 420))
 EOF
@@ -214,7 +217,7 @@ your web application. For example, to run `test.py`, go to
 
 </details>
 
-## Others
+## Other Operating Systems
 
 <details>
 <summary>Click to view details</summary>
@@ -247,6 +250,7 @@ cd /my/project/folder
 cat <<EOF > temp.py
 #!python3
 
+# Put your code here. For example:
 import random
 print(random.randint(0, 420))
 EOF
@@ -258,6 +262,45 @@ quickserv
 Go to <http://127.0.0.1:42069> (or the address shown by QuickServ) to connect to
 your web application. For example, to run `test.py`, go to
 <http://127.0.0.1:42069/test.py>.
+
+Alternatively, use the instructions below to compile from source.
+
+</details>
+
+## From Source
+
+<details>
+
+<summary>Click to view details</summary>
+
+Compile and install from source using the following command. A version of Go
+greater than 1.16 is required because of the dependency on embedded filesystems.
+
+``` bash
+go install github.com/jstrieb/quickserv@latest
+```
+
+Then create your project folder, populate it, and run QuickServ.
+
+``` bash
+# Make a project folder
+mkdir -p /my/project/folder
+
+# Go to project folder
+cd /my/project/folder
+
+# Add a test file 
+cat <<EOF > temp.py
+#!python3
+
+# Put your code here. For example:
+import random
+print(random.randint(0, 420))
+EOF
+
+# Run QuickServ
+quickserv
+```
 
 </details>
 
@@ -471,6 +514,12 @@ writing code before confirming that it will be merged in. As a busy, lone
 developer, it is easier to be responsive when all code contributions have
 context.
 
+If you make a blog post, video, tutorial, hackathon project, or anything else
+using QuickServ, please [open an
+issue](https://github.com/jstrieb/quickserv/issues/new) or message me on my
+[contact form](https://jstrieb.github.io/about#contact) so that I can link back
+to it!
+
 
 # Support the Project
 
@@ -479,6 +528,8 @@ There are a few ways to support the project:
 - Star the repository and follow me on GitHub
 - Share and upvote on sites like Twitter, Reddit, and Hacker News
 - Report any bugs, glitches, or errors that you find
+- Translate into other languages so everyone can use the project
+- Build and share your own projects made with QuickServ
 
 These things motivate me to to keep sharing what I build, and they provide
 validation that my work is appreciated! They also help me improve the project.
