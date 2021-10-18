@@ -26,6 +26,7 @@ import (
 	"strings"
 
 	"github.com/jstrieb/killfam"
+	"github.com/google/shlex"
 )
 
 /******************************************************************************
@@ -330,17 +331,17 @@ func ExecutePath(ctx context.Context, execPath string, w http.ResponseWriter, r 
 	if shebang := GetShebang(execPath); shebang == "" {
 		cmd = exec.Command(abspath)
 	} else {
-		// Poorly parse the shebang. Follow the Linux convention of passing
-		// everything in the shebang (after the executable absolute path) as a
-		// single argument. It's easier to parse this way instead of properly
-		// shlexing. See:
-		// http://mail-index.netbsd.org/netbsd-users/2008/11/09/msg002388.html
-		splitShebang := strings.SplitN(shebang, " ", 2)
-		if len(splitShebang) > 1 {
-			cmd = exec.Command(splitShebang[0], splitShebang[1], abspath)
-		} else {
-			cmd = exec.Command(splitShebang[0], abspath)
+		// Split the shebang using github.com/google/shlex. See
+		// https://github.com/jstrieb/quickserv/pull/2 for discussion
+		splitShebang, err := shlex.Split(shebang)
+		if err != nil {
+			logger.Println(err)
+			logger.Println("Couldn't parse the shebang.")
+			http.Error(w, http.StatusText(500), 500)
+			return
 		}
+		splitShebang = append(splitShebang, abspath)
+		cmd = exec.Command(splitShebang[0], splitShebang[1:]...)
 	}
 
 	// Create the command using all environment variables. Include a
