@@ -1,2 +1,4 @@
+github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 h1:El6M4kTTCOh6aBiKaUGG7oYTSPP8MxqL4YI3kZKwcP4=
+github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510/go.mod h1:pupxD2MaaD3pAXIBCelhxNneeOaAeabZDe5s4K6zSpQ=
 github.com/jstrieb/killfam v0.0.0-20210723063253-e95463771b4c h1:ZkrmBEzuyi9UK551ytyFiUw3kGsL96YXGqmCMNrhV28=
 github.com/jstrieb/killfam v0.0.0-20210723063253-e95463771b4c/go.mod h1:rv3dDy+TiBUvPLQ5qJZtYHLjkN45kZCXnkF92gGVgI8=
