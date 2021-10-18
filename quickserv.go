@@ -335,12 +335,9 @@ func ExecutePath(ctx context.Context, execPath string, w http.ResponseWriter, r 
 		// single argument. It's easier to parse this way instead of properly
 		// shlexing. See:
 		// http://mail-index.netbsd.org/netbsd-users/2008/11/09/msg002388.html
-		splitShebang := strings.SplitN(shebang, " ", 2)
-		if len(splitShebang) > 1 {
-			cmd = exec.Command(splitShebang[0], splitShebang[1], abspath)
-		} else {
-			cmd = exec.Command(splitShebang[0], abspath)
-		}
+		splitShebang := strings.Fields(shebang)
+		splitShebang = append(splitShebang, abspath)
+		cmd = exec.Command(splitShebang[0], splitShebang[1:]...)
 	}
 
 	// Create the command using all environment variables. Include a
