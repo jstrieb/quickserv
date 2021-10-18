@@ -267,7 +267,7 @@ Alternatively, use the instructions below to compile from source.
 
 </details>
 
-## From Source
+## Compile From Source
 
 <details>
 
@@ -308,9 +308,9 @@ quickserv
 # Examples
 
 All examples are located in the [`examples`](examples) folder, which is a git
-submodule that is connected to the
+submodule connected to the
 [jstrieb/quickserv-examples](https://github.com/jstrieb/quickserv-examples)
-repo. Go to the repo for more information on how to run the examples.
+repo. Go to that repo for more information on how to run the examples.
 
 Some highlights:
 
@@ -319,19 +319,89 @@ Some highlights:
 <tr>
 <th>Summary</th>
 <th>Language</th>
-<th>Lines of Code</th>
 <th>Windows</th>
 <th>Mac</th>
 <th>Linux</th>
 </tr>
 
 <tr>
-<td>Summary</td>
-<td>Language</td>
-<td>Length</td>
-<td><a href=""><div align="center">✓</div></a></td>
-<td><a href=""><div align="center">✗</div></a></td>
-<td><a href=""><div align="center">✗</div></a></td>
+<td><a href="https://github.com/jstrieb/quickserv-examples/blob/master/youtube-gif">YouTube to GIF</a></td>
+<td>Shell</td>
+<td><div align="center">✗</div></td>
+<td><div align="center">✓</div></td>
+<td><div align="center">✓</div></td>
+</tr>
+
+<tr>
+<td><a href="https://github.com/jstrieb/quickserv-examples/blob/master/movie-list">Synchronized movie list</a></td>
+<td>TypeScript</td>
+<td><div align="center">✓</div></td>
+<td><div align="center">✓</div></td>
+<td><div align="center">✓</div></td>
+</tr>
+
+<tr>
+<td><a href="https://github.com/jstrieb/quickserv-examples/blob/master/brainfuck">Brainfuck interpreter</a></td>
+<td>x86-64 Assembly</td>
+<td><div align="center">✗</div></td>
+<td><div align="center">✗</div></td>
+<td><div align="center">✓</div></td>
+</tr>
+
+<tr>
+<td><a href="https://github.com/jstrieb/quickserv-examples/blob/master/mandelbrot">Mandelbrot zoom</a></td>
+<td>Shell</td>
+<td><div align="center">✓</div></td>
+<td><div align="center">✓</div></td>
+<td><div align="center">✓</div></td>
+</tr>
+
+<tr>
+<td>View file metadata</td>
+<td>Shell</td>
+<td><div align="center">✓</div></td>
+<td><div align="center">✓</div></td>
+<td><div align="center">✓</div></td>
+</tr>
+
+<tr>
+<td>PDF toolkit</td>
+<td>Python</td>
+<td><div align="center">✓</div></td>
+<td><div align="center">✓</div></td>
+<td><div align="center">✓</div></td>
+</tr>
+
+<tr>
+<td>Typeset markdown</td>
+<td>Shell</td>
+<td><div align="center">✓</div></td>
+<td><div align="center">✓</div></td>
+<td><div align="center">✓</div></td>
+</tr>
+
+<tr>
+<td>Convert HEIC to JPEG</td>
+<td>SML</td>
+<td><div align="center">✓</div></td>
+<td><div align="center">✓</div></td>
+<td><div align="center">✓</div></td>
+</tr>
+
+<tr>
+<td>Discord Bot</td>
+<td>Python</td>
+<td><div align="center">✓</div></td>
+<td><div align="center">✓</div></td>
+<td><div align="center">✓</div></td>
+</tr>
+
+<tr>
+<td>Bloom filter creator</td>
+<td>C</td>
+<td><div align="center">✓</div></td>
+<td><div align="center">✓</div></td>
+<td><div align="center">✓</div></td>
 </tr>
 
 </table>
@@ -341,8 +411,8 @@ Some highlights:
 
 All of the QuickServ code lives in
 [`quickserv.go`](https://github.com/jstrieb/quickserv/blob/master/quickserv.go).
-This well-commented file is less than 700 lines long, and should take an
-experienced programmer with no Golang familiarity at most an hour to read.
+This well-commented file is about 700 lines long, and should take an experienced
+programmer with no Golang familiarity at most an hour to read.
 
 <details>
 <summary>Click to view details</summary>
