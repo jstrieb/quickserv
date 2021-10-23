@@ -333,6 +333,14 @@ Some highlights:
 </tr>
 
 <tr>
+<td><a href="https://github.com/jstrieb/quickserv-examples/blob/master/bloom-filter">Create Bloom filters</a></td>
+<td>C</td>
+<td><div align="center">✓</div></td>
+<td><div align="center">✓</div></td>
+<td><div align="center">✓</div></td>
+</tr>
+
+<tr>
 <td><a href="https://github.com/jstrieb/quickserv-examples/blob/master/movie-list">Synchronized movie list</a></td>
 <td>TypeScript</td>
 <td><div align="center">✓</div></td>
@@ -391,14 +399,6 @@ Some highlights:
 <tr>
 <td>Discord Bot</td>
 <td>Python</td>
-<td><div align="center">✓</div></td>
-<td><div align="center">✓</div></td>
-<td><div align="center">✓</div></td>
-</tr>
-
-<tr>
-<td>Bloom filter creator</td>
-<td>C</td>
 <td><div align="center">✓</div></td>
 <td><div align="center">✓</div></td>
 <td><div align="center">✓</div></td>
