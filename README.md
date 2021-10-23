@@ -26,7 +26,9 @@ inspired by the [Common Gateway Interface
 easier to set up and use. Unlike CGI, it works out of the box with no searching
 for obscure log files, no learning how HTTP headers work, no fiddling with
 permission bits, no worrying about CORS, no wondering where to put your scripts,
-and no struggling with Apache `mod_cgi` configurations. 
+and no struggling with Apache `mod_cgi` configurations. Unlike with CGI, you
+don't have to know what anything from the previous sentence means to use
+QuickServ.
 
 <!-- I promise I'm not jaded about CGI or anything ;) -->
 
@@ -34,12 +36,13 @@ It is perfect for:
 
 - Building hackathon projects without learning a web framework
 - Creating internal tools
-- Prototyping applications using any language
+- Prototyping web applications using any language
 - Attaching web interfaces to scripts
 - Controlling hardware with Raspberry Pis on your local network
 - Trying out web development without being overwhelmed
 
-[QuickServ should not be used on the open Internet.](#disclaimer) 
+[QuickServ should not be used on the public Internet. It should only be used on
+private networks.](#disclaimer) 
 
 
 # Get Started
@@ -56,7 +59,7 @@ to execute, and which to serve directly to the user.
 1. [Download for
    Windows](https://github.com/jstrieb/quickserv/releases/latest/download/quickserv_windows_x64.exe).
 
-2. Make a project folder and add files to it. For example, if Python is
+1. Make a project folder and add files to it. For example, if Python is
    installed, create a file called `test.py` in the project folder containing:
 
    ``` python
@@ -79,13 +82,13 @@ to execute, and which to serve directly to the user.
    `.exe` and `.bat`. Any other file type needs to start with `#!something` if
    it should be run.
 
-3. Move the downloaded `quickserv_windows_x64.exe` file to the project folder.
+1. Move the downloaded `quickserv_windows_x64.exe` file to the project folder.
 
    <div align="center">
    <img src="doc/windows_3.png" width="75%" align="center">
    </div>
 
-4. Double click `quickserv_windows_x64.exe` in the project folder to start
+1. Double click `quickserv_windows_x64.exe` in the project folder to start
    QuickServ. Allow access through Windows Defender if prompted.
 
    <div align="center">
@@ -94,7 +97,7 @@ to execute, and which to serve directly to the user.
    <img src="doc/windows_4_2.png" width="90%" align="center">
    </div>
 
-5. Go to <http://127.0.0.1:42069> (or the address shown by QuickServ) to connect
+1. Go to <http://127.0.0.1:42069> (or the address shown by QuickServ) to connect
    to your web application. In the example, to run `test.py`, go to
    <http://127.0.0.1:42069/test.py>.
 
@@ -118,7 +121,7 @@ to execute, and which to serve directly to the user.
    - [Download for Apple
      Silicon](https://github.com/jstrieb/quickserv/releases/latest/download/quickserv_macos_arm64.zip).
 
-2. Make a project folder and add files to it. For example, if Python is
+1. Make a project folder and add files to it. For example, if Python is
    installed, create a file called `test.py` in the project folder containing:
 
    ``` python
@@ -148,10 +151,10 @@ to execute, and which to serve directly to the user.
    compiled. Any other file type needs to start with `#!something` if it should
    be run.
 
-3. Move the downloaded `quickserv_macos_x64` or `quickserv_macos_arm64` file to
+1. Move the downloaded `quickserv_macos_x64` or `quickserv_macos_arm64` file to
    the project folder.
 
-4. Right click `quickserv_macos_x64` or `quickserv_macos_arm64` in the project
+1. Right click `quickserv_macos_x64` or `quickserv_macos_arm64` in the project
    folder and select "Open." Then, press "Open" in the confirmation dialog box. 
    After running it this way once, you will be able to start QuickServ by simply
    double-clicking the file.
@@ -162,7 +165,7 @@ to execute, and which to serve directly to the user.
    <img src="doc/macos_4_3.png" width="75%" align="center">
    </div>
 
-5. Go to <http://127.0.0.1:42069> (or the address shown by QuickServ) to connect
+1. Go to <http://127.0.0.1:42069> (or the address shown by QuickServ) to connect
    to your web application. In the example, to run `test.py`, go to
    <http://127.0.0.1:42069/test.py>.
 
@@ -307,7 +310,7 @@ quickserv
 
 # Examples
 
-All examples are located in the [`examples`](examples) folder, which is a git
+All examples are located in the [`examples`](examples) folder, which is a Git
 submodule connected to the
 [jstrieb/quickserv-examples](https://github.com/jstrieb/quickserv-examples)
 repo. Go to that repo for more information on how to run the examples.
@@ -365,16 +368,24 @@ Some highlights:
 </tr>
 
 <tr>
-<td>View file metadata</td>
-<td>Shell</td>
+<td><a href="https://github.com/jstrieb/quickserv-examples/blob/master/crypto-dashboard">Cryptocurrency dashboard</a></td>
+<td>Go</td>
 <td><div align="center">✓</div></td>
 <td><div align="center">✓</div></td>
 <td><div align="center">✓</div></td>
 </tr>
 
 <tr>
-<td>PDF toolkit</td>
+<td><a href="https://github.com/jstrieb/quickserv-examples/blob/master/pdf-tools">PDF tools</a></td>
 <td>Python</td>
+<td><div align="center">✗</div></td>
+<td><div align="center">✓</div></td>
+<td><div align="center">✓</div></td>
+</tr>
+
+<tr>
+<td>View file metadata</td>
+<td>Shell</td>
 <td><div align="center">✓</div></td>
 <td><div align="center">✓</div></td>
 <td><div align="center">✓</div></td>
