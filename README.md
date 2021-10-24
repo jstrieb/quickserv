@@ -384,32 +384,8 @@ Some highlights:
 </tr>
 
 <tr>
-<td>View file metadata</td>
-<td>Shell</td>
-<td><div align="center">✓</div></td>
-<td><div align="center">✓</div></td>
-<td><div align="center">✓</div></td>
-</tr>
-
-<tr>
-<td>Typeset markdown</td>
-<td>Shell</td>
-<td><div align="center">✓</div></td>
-<td><div align="center">✓</div></td>
-<td><div align="center">✓</div></td>
-</tr>
-
-<tr>
-<td>Convert HEIC to JPEG</td>
-<td>SML</td>
-<td><div align="center">✓</div></td>
-<td><div align="center">✓</div></td>
-<td><div align="center">✓</div></td>
-</tr>
-
-<tr>
-<td>Discord Bot</td>
-<td>Python</td>
+<td><a href="https://github.com/jstrieb/quickserv-examples/blob/master/typeset-markdown">Typeset Markdown as PDF</a></td>
+<td>Standard ML</td>
 <td><div align="center">✓</div></td>
 <td><div align="center">✓</div></td>
 <td><div align="center">✓</div></td>
