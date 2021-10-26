@@ -1,4 +1,4 @@
-<img src="favicon.svg" width="125" height="125" align="left">
+<a href="https://github.com/jstrieb/quickserv"><img src="https://github.com/jstrieb/quickserv/blob/master/favicon.svg?raw=true" width="125" height="125" align="left"></a>
 
 # **QuickServ** 
 
@@ -18,6 +18,7 @@ matter what programming language you use. QuickServ:
 - Works with any programming language that can `read` and `write`
 - Doesn't require understanding the intricacies of HTTP
 - Enables Cross Origin Request Sharing (CORS) by default
+- Works with or without the command line 
 
 QuickServ brings the heady fun of the 1990s Internet to the 2020s. It is
 inspired by the [Common Gateway Interface
@@ -27,18 +28,22 @@ for obscure log files, no learning how HTTP headers work, no fiddling with
 permission bits, no worrying about CORS, no wondering where to put your scripts,
 and no struggling with Apache `mod_cgi` configurations. 
 
+Unlike with CGI, you don't have to know what anything from the previous
+paragraph means to use QuickServ.
+
 <!-- I promise I'm not jaded about CGI or anything ;) -->
 
 It is perfect for:
 
 - Building hackathon projects without learning a web framework
 - Creating internal tools
-- Prototyping applications using any language
-- Giving scripts web interfaces
+- Prototyping web applications using any language
+- Attaching web interfaces to scripts
 - Controlling hardware with Raspberry Pis on your local network
 - Trying out web development without being overwhelmed
 
-[QuickServ should not be used on the open Internet.](#disclaimer) 
+[QuickServ should not be used on the public Internet. It should only be used on
+private networks.](#disclaimer) 
 
 
 # Get Started
@@ -55,12 +60,13 @@ to execute, and which to serve directly to the user.
 1. [Download for
    Windows](https://github.com/jstrieb/quickserv/releases/latest/download/quickserv_windows_x64.exe).
 
-2. Make a project folder and add files to it. For example, if Python is
+1. Make a project folder and add files to it. For example, if Python is
    installed, create a file called `test.py` in the project folder containing:
 
    ``` python
    #!python
 
+   # Put your code here. For example:
    import random
    print(random.randint(0, 420))
    ```
@@ -77,13 +83,13 @@ to execute, and which to serve directly to the user.
    `.exe` and `.bat`. Any other file type needs to start with `#!something` if
    it should be run.
 
-3. Move the downloaded `quickserv_windows_x64.exe` file to the project folder.
+1. Move the downloaded `quickserv_windows_x64.exe` file to the project folder.
 
    <div align="center">
    <img src="doc/windows_3.png" width="75%" align="center">
    </div>
 
-4. Double click `quickserv_windows_x64.exe` in the project folder to start
+1. Double click `quickserv_windows_x64.exe` in the project folder to start
    QuickServ. Allow access through Windows Defender if prompted.
 
    <div align="center">
@@ -92,7 +98,7 @@ to execute, and which to serve directly to the user.
    <img src="doc/windows_4_2.png" width="90%" align="center">
    </div>
 
-5. Go to <http://127.0.0.1:42069> (or the address shown by QuickServ) to connect
+1. Go to <http://127.0.0.1:42069> (or the address shown by QuickServ) to connect
    to your web application. In the example, to run `test.py`, go to
    <http://127.0.0.1:42069/test.py>.
 
@@ -116,12 +122,13 @@ to execute, and which to serve directly to the user.
    - [Download for Apple
      Silicon](https://github.com/jstrieb/quickserv/releases/latest/download/quickserv_macos_arm64.zip).
 
-2. Make a project folder and add files to it. For example, if Python is
+1. Make a project folder and add files to it. For example, if Python is
    installed, create a file called `test.py` in the project folder containing:
 
    ``` python
    #!python
 
+   # Put your code here. For example:
    import random
    print(random.randint(0, 420))
    ```
@@ -145,10 +152,10 @@ to execute, and which to serve directly to the user.
    compiled. Any other file type needs to start with `#!something` if it should
    be run.
 
-3. Move the downloaded `quickserv_macos_x64` or `quickserv_macos_arm64` file to
+1. Move the downloaded `quickserv_macos_x64` or `quickserv_macos_arm64` file to
    the project folder.
 
-4. Right click `quickserv_macos_x64` or `quickserv_macos_arm64` in the project
+1. Right click `quickserv_macos_x64` or `quickserv_macos_arm64` in the project
    folder and select "Open." Then, press "Open" in the confirmation dialog box. 
    After running it this way once, you will be able to start QuickServ by simply
    double-clicking the file.
@@ -159,7 +166,7 @@ to execute, and which to serve directly to the user.
    <img src="doc/macos_4_3.png" width="75%" align="center">
    </div>
 
-5. Go to <http://127.0.0.1:42069> (or the address shown by QuickServ) to connect
+1. Go to <http://127.0.0.1:42069> (or the address shown by QuickServ) to connect
    to your web application. In the example, to run `test.py`, go to
    <http://127.0.0.1:42069/test.py>.
 
@@ -199,6 +206,7 @@ cd my/project/folder
 cat <<EOF > temp.py
 #!python3
 
+# Put your code here. For example:
 import random
 print(random.randint(0, 420))
 EOF
@@ -213,7 +221,7 @@ your web application. For example, to run `test.py`, go to
 
 </details>
 
-## Others
+## Other Operating Systems
 
 <details>
 <summary>Click to view details</summary>
@@ -246,6 +254,7 @@ cd /my/project/folder
 cat <<EOF > temp.py
 #!python3
 
+# Put your code here. For example:
 import random
 print(random.randint(0, 420))
 EOF
@@ -258,20 +267,245 @@ Go to <http://127.0.0.1:42069> (or the address shown by QuickServ) to connect to
 your web application. For example, to run `test.py`, go to
 <http://127.0.0.1:42069/test.py>.
 
+Alternatively, use the instructions below to compile from source.
+
 </details>
+
+## Compile From Source
+
+<details>
+
+<summary>Click to view details</summary>
+
+Compile and install from source using the following command. A version of Go
+greater than 1.16 is required because of the dependency on embedded filesystems.
+
+``` bash
+go install github.com/jstrieb/quickserv@latest
+```
+
+Then create your project folder, populate it, and run QuickServ.
+
+``` bash
+# Make a project folder
+mkdir -p /my/project/folder
+
+# Go to project folder
+cd /my/project/folder
+
+# Add a test file 
+cat <<EOF > temp.py
+#!python3
+
+# Put your code here. For example:
+import random
+print(random.randint(0, 420))
+EOF
+
+# Run QuickServ
+quickserv
+```
+
+</details>
+
+
+# Tutorial
+
+To demonstrate key features of QuickServ, we will build a simple web
+application to perform addition. The code will not follow best practices, but
+it will show how little is needed to get started building with QuickServ.
+
+First, we create create a project folder and drag the QuickServ executable into
+the folder, as in the [getting started](#get-started) steps.
+
+Next, inside the folder, we save the following text as `index.html`:
+
+``` html
+<form action="/calculate">
+<input name="first" type="number"> + <input name="second" type="number"> = ???
+<br>
+<button>Calculate</button>
+</form>
+```
+
+This code submits two variables to the `/calculate` page. In the browser, it
+looks like this:
+
+<div align="center">
+<img src="doc/add.png" width="75%" align="center">
+</div>
+
+Then, we create a folder called `calculate` inside the project folder. Inside
+the `calculate` folder, we save the following code as `index.py`. The name
+`index.whatever` tells QuickServ to run this file when a user visits
+`http://website/calculate` instead of needing them to visit
+`http://website/calculate/index.py`.
+
+Pay special attention to the code comments. They highlight a number of
+important QuickServ features.
+
+``` python
+#!python3
+
+# Each QuickServ script must begin with a line like the one above so that
+# QuickServ knows how to run the file. I would run `python3 this_file.py` to
+# run this file, so the previous line tells QuickServ to do it that way. But if
+# you wanted to do `julia my_file.jl` for example, then you would make the
+# first line `#!julia` instead. 
+# 
+# Since we just want QuickServ to show the HTML code to the user and not run
+# it, it does not begin with this.
+
+import sys
+
+
+# In the input, "=" and "&" determine where variables start and end. So if they
+# are literally included in the variable name or value, they must be specially
+# decoded. This code replaces every instance of the text on the left with the
+# text on the right:
+#     %3D -> =
+#     %26 -> &
+#     %25 -> %
+#
+# NOTE: Order matters! "%" must be decoded last. If not, it can mess with
+# decoding the others
+def decode_characters(text):
+    text = text.replace("%3D", "=")
+    text = text.replace("%26", "&")
+    text = text.replace("%25", "%")
+    return text
+
+first = second = 0
+
+# Read all of the input into a variable. We are expecting the raw data to look
+# like:
+#       first=123&second=456
+data = sys.stdin.read()
+
+# The raw data looks like the above, so split it into pairs at each "&"
+pairs = data.split("&")
+for pair in pairs:
+    # Each pair looks like the following, so split at each "=":
+    #       name=value
+    name, value = pair.split("=")
+
+    # Decode any special characters (=, &, %) now that we have split the
+    # variables up. This isn't necessary here since we're expecting numbers and
+    # not expecting any of those characters. But it matters a lot when a user
+    # could submit text with those characters
+    name = decode_characters(name)
+    value = decode_characters(value)
+
+    # If the name is what we're looking for, store the value for adding
+    if name == "first":
+        first = int(value)
+    elif name == "second":
+        second = int(value)
+
+# Print the result -- anything printed out goes right to the user. In this
+# case, the output is text. But you can print anything and QuickServ will try and
+# guess the file type.
+print(first + second)
+```
+
+Now double click QuickServ in your project folder and try it out in your
+browser. That's it!
+
+See the examples linked in the next section for more QuickServ demonstrations.
 
 
 # Examples
 
-TODO
+All examples are located in the [`examples`](examples) folder, which is a Git
+submodule connected to the
+[jstrieb/quickserv-examples](https://github.com/jstrieb/quickserv-examples)
+repo. Go to that repo for more information on how to run the examples.
+
+Some highlights:
+
+<table>
+
+<tr>
+<th>Summary</th>
+<th>Language</th>
+<th>Windows</th>
+<th>Mac</th>
+<th>Linux</th>
+</tr>
+
+<tr>
+<td><a href="https://github.com/jstrieb/quickserv-examples/blob/master/youtube-gif">YouTube to GIF</a></td>
+<td>Shell</td>
+<td><div align="center">✗</div></td>
+<td><div align="center">✓</div></td>
+<td><div align="center">✓</div></td>
+</tr>
+
+<tr>
+<td><a href="https://github.com/jstrieb/quickserv-examples/blob/master/bloom-filter">Create Bloom filters</a></td>
+<td>C</td>
+<td><div align="center">✓</div></td>
+<td><div align="center">✓</div></td>
+<td><div align="center">✓</div></td>
+</tr>
+
+<tr>
+<td><a href="https://github.com/jstrieb/quickserv-examples/blob/master/movie-list">Synchronized movie list</a></td>
+<td>TypeScript</td>
+<td><div align="center">✓</div></td>
+<td><div align="center">✓</div></td>
+<td><div align="center">✓</div></td>
+</tr>
+
+<tr>
+<td><a href="https://github.com/jstrieb/quickserv-examples/blob/master/brainfuck">Brainfuck interpreter</a></td>
+<td>x86-64 Assembly</td>
+<td><div align="center">✗</div></td>
+<td><div align="center">✗</div></td>
+<td><div align="center">✓</div></td>
+</tr>
+
+<tr>
+<td><a href="https://github.com/jstrieb/quickserv-examples/blob/master/mandelbrot">Mandelbrot zoom</a></td>
+<td>Shell</td>
+<td><div align="center">✓</div></td>
+<td><div align="center">✓</div></td>
+<td><div align="center">✓</div></td>
+</tr>
+
+<tr>
+<td><a href="https://github.com/jstrieb/quickserv-examples/blob/master/crypto-dashboard">Cryptocurrency dashboard</a></td>
+<td>Go</td>
+<td><div align="center">✓</div></td>
+<td><div align="center">✓</div></td>
+<td><div align="center">✓</div></td>
+</tr>
+
+<tr>
+<td><a href="https://github.com/jstrieb/quickserv-examples/blob/master/pdf-tools">PDF tools</a></td>
+<td>Python</td>
+<td><div align="center">✗</div></td>
+<td><div align="center">✓</div></td>
+<td><div align="center">✓</div></td>
+</tr>
+
+<tr>
+<td><a href="https://github.com/jstrieb/quickserv-examples/blob/master/typeset-markdown">Typeset Markdown as PDF</a></td>
+<td>Standard ML</td>
+<td><div align="center">✓</div></td>
+<td><div align="center">✓</div></td>
+<td><div align="center">✓</div></td>
+</tr>
+
+</table>
 
 
 # How It Works
 
 All of the QuickServ code lives in
 [`quickserv.go`](https://github.com/jstrieb/quickserv/blob/master/quickserv.go).
-This well-commented file is less than 700 lines long, and should take an
-experienced programmer with no Golang familiarity at most an hour to read.
+This well-commented file is about 700 lines long, and should take an experienced
+programmer with no Golang familiarity at most an hour to read.
 
 <details>
 <summary>Click to view details</summary>
@@ -443,6 +677,12 @@ writing code before confirming that it will be merged in. As a busy, lone
 developer, it is easier to be responsive when all code contributions have
 context.
 
+If you make a blog post, video, tutorial, hackathon project, or anything else
+using QuickServ, please [open an
+issue](https://github.com/jstrieb/quickserv/issues/new) or message me on my
+[contact form](https://jstrieb.github.io/about#contact) so that I can link back
+to it!
+
 
 # Support the Project
 
@@ -451,6 +691,8 @@ There are a few ways to support the project:
 - Star the repository and follow me on GitHub
 - Share and upvote on sites like Twitter, Reddit, and Hacker News
 - Report any bugs, glitches, or errors that you find
+- Translate into other languages so everyone can use the project
+- Build and share your own projects made with QuickServ
 
 These things motivate me to to keep sharing what I build, and they provide
 validation that my work is appreciated! They also help me improve the project.
