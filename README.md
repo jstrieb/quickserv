@@ -348,27 +348,27 @@ important QuickServ features.
 #!python3
 
 # Each QuickServ script must begin with a line like the one above so that
-# QuickServ knows how to run the file. I would run `python3 this_file.py` to
-# run this file, so the previous line tells QuickServ to do it that way. But if
+# QuickServ knows how to run the file. I would do `python3 this_file.py` to
+# run this file. The first line tells QuickServ to do it that way. But if
 # you wanted to do `julia my_file.jl` for example, then you would make the
-# first line `#!julia` instead. 
+# first line of `my_file.jl` be `#!julia`. 
 # 
 # Since we just want QuickServ to show the HTML code to the user and not run
-# it, it does not begin with this.
+# it, index.html does not begin with this.
 
 import sys
 
 
-# In the input, "=" and "&" determine where variables start and end. So if they
-# are literally included in the variable name or value, they must be specially
-# decoded. This code replaces every instance of the text on the left with the
-# text on the right:
+# In the form input, "=" and "&" determine where variables start and end. So if
+# they are literally included in the variable name or value, they must be
+# specially decoded. This code replaces every instance of the text on the left
+# with the text on the right to do the decoding:
 #     %3D -> =
 #     %26 -> &
 #     %25 -> %
 #
 # NOTE: Order matters! "%" must be decoded last. If not, it can mess with
-# decoding the others
+# decoding the others, since their encoded version uses "%"
 def decode_characters(text):
     text = text.replace("%3D", "=")
     text = text.replace("%26", "&")
@@ -412,6 +412,8 @@ Now double click QuickServ in your project folder and try it out in your
 browser. That's it!
 
 See the examples linked in the next section for more QuickServ demonstrations.
+Read more details in the [How it Works](#how-it-works) section, and in the code
+itself.
 
 
 # Examples
