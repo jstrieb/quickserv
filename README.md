@@ -416,8 +416,8 @@ See the examples linked in the next section for more QuickServ demonstrations.
 
 # Examples
 
-All examples are located in the [`examples`](examples) folder, which is a Git
-submodule connected to the
+All examples are located in the `examples` folder, which is a Git submodule
+connected to the
 [jstrieb/quickserv-examples](https://github.com/jstrieb/quickserv-examples)
 repo. Go to that repo for more information on how to run the examples.
 
