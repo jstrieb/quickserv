@@ -26,9 +26,10 @@ inspired by the [Common Gateway Interface
 easier to set up and use. Unlike CGI, it works out of the box with no searching
 for obscure log files, no learning how HTTP headers work, no fiddling with
 permission bits, no worrying about CORS, no wondering where to put your scripts,
-and no struggling with Apache `mod_cgi` configurations. Unlike with CGI, you
-don't have to know what anything from the previous sentence means to use
-QuickServ.
+and no struggling with Apache `mod_cgi` configurations. 
+
+Unlike with CGI, you don't have to know what anything from the previous
+paragraph means to use QuickServ.
 
 <!-- I promise I'm not jaded about CGI or anything ;) -->
 
@@ -306,6 +307,111 @@ quickserv
 ```
 
 </details>
+
+
+# Tutorial
+
+To demonstrate key features of QuickServ, we will build a simple web
+application to perform addition. The code will not follow best practices, but
+it will show how little is needed to get started building with QuickServ.
+
+First, we create create a project folder and drag the QuickServ executable into
+the folder, as in the [getting started](#get-started) steps.
+
+Next, inside the folder, we save the following text as `index.html`:
+
+``` html
+<form action="/calculate">
+<input name="first" type="number"> + <input name="second" type="number"> = ???
+<br>
+<button>Calculate</button>
+</form>
+```
+
+This code submits two variables to the `/calculate` page. In the browser, it
+looks like this:
+
+<div align="center">
+<img src="doc/add.png" width="75%" align="center">
+</div>
+
+Then, we create a folder called `calculate` inside the project folder. Inside
+the `calculate` folder, we save the following code as `index.py`. The name
+`index.whatever` tells QuickServ to run this file when a user visits
+`http://website/calculate` instead of needing them to visit
+`http://website/calculate/index.py`.
+
+Pay special attention to the code comments. They highlight a number of
+important QuickServ features.
+
+``` python
+#!python3
+
+# Each QuickServ script must begin with a line like the one above so that
+# QuickServ knows how to run the file. I would run `python3 this_file.py` to
+# run this file, so the previous line tells QuickServ to do it that way. But if
+# you wanted to do `julia my_file.jl` for example, then you would make the
+# first line `#!julia` instead. 
+# 
+# Since we just want QuickServ to show the HTML code to the user and not run
+# it, it does not begin with this.
+
+import sys
+
+
+# In the input, "=" and "&" determine where variables start and end. So if they
+# are literally included in the variable name or value, they must be specially
+# decoded. This code replaces every instance of the text on the left with the
+# text on the right:
+#     %3D -> =
+#     %26 -> &
+#     %25 -> %
+#
+# NOTE: Order matters! "%" must be decoded last. If not, it can mess with
+# decoding the others
+def decode_characters(text):
+    text = text.replace("%3D", "=")
+    text = text.replace("%26", "&")
+    text = text.replace("%25", "%")
+    return text
+
+first = second = 0
+
+# Read all of the input into a variable. We are expecting the raw data to look
+# like:
+#       first=123&second=456
+data = sys.stdin.read()
+
+# The raw data looks like the above, so split it into pairs at each "&"
+pairs = data.split("&")
+for pair in pairs:
+    # Each pair looks like the following, so split at each "=":
+    #       name=value
+    name, value = pair.split("=")
+
+    # Decode any special characters (=, &, %) now that we have split the
+    # variables up. This isn't necessary here since we're expecting numbers and
+    # not expecting any of those characters. But it matters a lot when a user
+    # could submit text with those characters
+    name = decode_characters(name)
+    value = decode_characters(value)
+
+    # If the name is what we're looking for, store the value for adding
+    if name == "first":
+        first = int(value)
+    elif name == "second":
+        second = int(value)
+
+# Print the result -- anything printed out goes right to the user. In this
+# case, the output is text. But you can print anything and QuickServ will try and
+# guess the file type.
+print(first + second)
+```
+
+Now double click QuickServ in your project folder and try it out in your
+browser. That's it!
+
+See the examples linked in the next section for more QuickServ demonstrations.
 
 
 # Examples
