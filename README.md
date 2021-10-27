@@ -203,7 +203,7 @@ mkdir -p my/project/folder
 cd my/project/folder
 
 # Add a test file 
-cat <<EOF > temp.py
+cat <<EOF > test.py
 #!python3
 
 # Put your code here. For example:
@@ -251,7 +251,7 @@ mkdir -p /my/project/folder
 cd /my/project/folder
 
 # Add a test file 
-cat <<EOF > temp.py
+cat <<EOF > test.py
 #!python3
 
 # Put your code here. For example:
@@ -294,7 +294,7 @@ mkdir -p /my/project/folder
 cd /my/project/folder
 
 # Add a test file 
-cat <<EOF > temp.py
+cat <<EOF > test.py
 #!python3
 
 # Put your code here. For example:
