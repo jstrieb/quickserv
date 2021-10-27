@@ -25,8 +25,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/jstrieb/killfam"
 	"github.com/google/shlex"
+	"github.com/jstrieb/killfam"
 )
 
 /******************************************************************************
@@ -101,6 +101,10 @@ func Fatal(s interface{}) {
 // GetLocalIP finds the IP address of the computer on the local area network so
 // anyone on the same network can connect to the server. Code inspired by:
 // https://stackoverflow.com/a/37382208/1376127
+//
+// GetLocalIP also returns a modified version of the raw IP string in brackets
+// if it is an IPv6 address. See:
+// https://en.wikipedia.org/wiki/IPv6_address#Literal_IPv6_addresses_in_network_resource_identifiers
 func GetLocalIP() string {
 	conn, err := net.Dial("udp", "example.com:80")
 	if err != nil {
@@ -111,7 +115,13 @@ func GetLocalIP() string {
 	defer conn.Close()
 
 	localAddr := conn.LocalAddr().(*net.UDPAddr)
-	return localAddr.IP.String()
+	resultString := localAddr.IP.String()
+
+	// If it cannot be coerced into 4-byte representation it's IPv6 (hopefully)
+	if localAddr.IP.To4() == nil {
+		resultString = "[" + resultString + "]"
+	}
+	return resultString
 }
 
 // DecodeForm performs URL query unescaping on encoded form data to make parsing
@@ -377,11 +387,10 @@ func ExecutePath(ctx context.Context, execPath string, w http.ResponseWriter, r 
 	go func() {
 		defer stdin.Close()
 
-		// TODO: Test with PUT/DELETE/other HTTP methods
-		if r.Method != "POST" || (len(r.Header["Content-Type"]) > 0 &&
+		if r.Method == "GET" || (len(r.Header["Content-Type"]) > 0 &&
 			r.Header["Content-Type"][0] == "application/x-www-form-urlencoded") {
-			// If the submission is a non-POST request, or is a form
-			// submission according to content type, treat it like a form
+			// If the submission is a GET request, or is a form submission
+			// according to content type, treat it like a form
 			err := r.ParseForm()
 			if err != nil {
 				logger.Println(err)
@@ -405,10 +414,10 @@ func ExecutePath(ctx context.Context, execPath string, w http.ResponseWriter, r 
 				return
 			}
 		} else {
-			// This POST data is not form data (may be a JSON API request,
-			// for example), so don't encode it as a form. If it is a
-			// multipart or other form submission, it will be properly
-			// encoded already.
+			// This POST/PUT/DELETE data is not form data (may be a JSON API
+			// request, for example), so don't encode it as a form. If it is a
+			// multipart or other form submission, it will be properly encoded
+			// already.
 			_, err := io.Copy(stdin, r.Body)
 			if err != nil {
 				logger.Println(err)
@@ -687,9 +696,10 @@ func main() {
 To make a script executable: start the first line with "#!xxx" where "xxx" is
 the command to run the script. For example, if you normally run your code with
 "python3 myfile.py" make the first line of myfile.py be "#!python3" (without
-quotation marks).`)
-		// TODO
-		// fmt.Println("For more information see the documentation here: TODO")
+quotation marks).
+
+For more information see the documentation here:
+https://github.com/jstrieb/quickserv`)
 	}
 	fmt.Println("")
 
