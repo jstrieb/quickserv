@@ -267,6 +267,30 @@ func GetShebang(path string) string {
 	return strings.TrimSuffix(strings.TrimPrefix(string(result), "#!"), "\r")
 }
 
+// GetFormAsArguments converts a parsed form such that the variable name=value
+// becomes the following. Names are always preceded by two dashes "--".
+// 		[]string{"--name", "value"}
+//
+// No guarantees are made about the order of the variables in the resulting
+// slice, except that every name directly precedes its respective value.
+func GetFormAsArguments(form url.Values) []string {
+	var result []string
+	for k, vs := range form {
+		if k != "" {
+			for _, v := range vs {
+				if v != "" {
+					result = append(result, "--"+k, v)
+				} else {
+					result = append(result, "--"+k)
+				}
+			}
+		} else {
+			result = append(result, vs...)
+		}
+	}
+	return result
+}
+
 // IsPathExecutable returns whether or not a given file is executable based on
 // its file extension and permission bits (depending on the operating system),
 // and/or its shebang-style first line (irrespective of operating system).
@@ -337,9 +361,25 @@ func ExecutePath(ctx context.Context, execPath string, w http.ResponseWriter, r 
 	}
 	dir, _ := filepath.Split(abspath)
 
+	// Get form variables as additional arguments if applicable
+	var formArguments []string
+	if r.Method == "GET" || (len(r.Header["Content-Type"]) > 0 &&
+		r.Header["Content-Type"][0] == "application/x-www-form-urlencoded") {
+		// Parse form data into r.Form
+		err = r.ParseForm()
+		if err != nil {
+			logger.Println(err)
+			logger.Println("Couldn't parse the request form.")
+			http.Error(w, http.StatusText(500), 500)
+			return
+		}
+
+		formArguments = GetFormAsArguments(r.Form)
+	}
+
 	var cmd *exec.Cmd
 	if shebang := GetShebang(execPath); shebang == "" {
-		cmd = exec.Command(abspath)
+		cmd = exec.Command(abspath, formArguments...)
 	} else {
 		// Split the shebang using github.com/google/shlex. See
 		// https://github.com/jstrieb/quickserv/pull/2 for discussion
@@ -351,7 +391,9 @@ func ExecutePath(ctx context.Context, execPath string, w http.ResponseWriter, r 
 			return
 		}
 		splitShebang = append(splitShebang, abspath)
-		cmd = exec.Command(splitShebang[0], splitShebang[1:]...)
+		cmd = exec.Command(
+			splitShebang[0], append(splitShebang[1:], formArguments...)...,
+		)
 	}
 
 	// Create the command using all environment variables. Include a
@@ -391,14 +433,6 @@ func ExecutePath(ctx context.Context, execPath string, w http.ResponseWriter, r 
 			r.Header["Content-Type"][0] == "application/x-www-form-urlencoded") {
 			// If the submission is a GET request, or is a form submission
 			// according to content type, treat it like a form
-			err := r.ParseForm()
-			if err != nil {
-				logger.Println(err)
-				logger.Println("Couldn't parse the request form.")
-				http.Error(w, http.StatusText(500), 500)
-				return
-			}
-
 			formData, err := DecodeForm(r.Form)
 			if err != nil {
 				logger.Println(err)
