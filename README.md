@@ -348,63 +348,41 @@ important QuickServ features.
 #!python3
 
 # Each QuickServ script must begin with a line like the one above so that
-# QuickServ knows how to run the file. I would do `python3 this_file.py` to
-# run this file. The first line tells QuickServ to do it that way. But if
-# you wanted to do `julia my_file.jl` for example, then you would make the
-# first line of `my_file.jl` be `#!julia`. 
+# QuickServ knows how to run the file. This line tells QuickServ that I would
+# type `python3 this_file.py` to run this file at the command prompt. For
+# example, if you wanted to do `julia this_file.py` instead, then you would make
+# the first line of `this_file.py` be `#!julia`. 
 # 
-# Since we just want QuickServ to show the HTML code to the user and not run
-# it, index.html does not begin with this.
+# Since we just want QuickServ to show the HTML code to the user and not run it,
+# index.html does not begin with this. The first line is only required when
+# QuickServ has to run the code.
 
 import sys
 
 
-# In the form input, "=" and "&" determine where variables start and end. So if
-# they are literally included in the variable name or value, they must be
-# specially decoded. This code replaces every instance of the text on the left
-# with the text on the right to do the decoding:
-#     %3D -> =
-#     %26 -> &
-#     %25 -> %
-#
-# NOTE: Order matters! "%" must be decoded last. If not, it can mess with
-# decoding the others, since their encoded version uses "%"
-def decode_characters(text):
-    text = text.replace("%3D", "=")
-    text = text.replace("%26", "&")
-    text = text.replace("%25", "%")
-    return text
-
 first = second = 0
 
-# Read all of the input into a variable. We are expecting the raw data to look
-# like:
-#       first=123&second=456
-data = sys.stdin.read()
+# All HTML form values get turned into command line arguments. The names are
+# formatted like "--name" and the value comes right after the name. In Python,
+# command line arguments are stored in sys.arv. In our case, if we submit "123"
+# and "456" to the form, sys.argv looks like:
+# 
+# ["index.py", "--first", "123", "--second", "456"]
+# 
+# Loop over the command line arguments to find the HTML form values we want
+for i in range(len(sys.argv) - 1): 
+      name = sys.argv[i] 
+      value = sys.argv[i+1]
 
-# The raw data looks like the above, so split it into pairs at each "&"
-pairs = data.split("&")
-for pair in pairs:
-    # Each pair looks like the following, so split at each "=":
-    #       name=value
-    name, value = pair.split("=")
+      # If the name is what we're looking for, store the value for adding
+      if name == "--first":
+            first = int(value)
+      elif name == "--second":
+            second = int(value)
 
-    # Decode any special characters (=, &, %) now that we have split the
-    # variables up. This isn't necessary here since we're expecting numbers and
-    # not expecting any of those characters. But it matters a lot when a user
-    # could submit text with those characters
-    name = decode_characters(name)
-    value = decode_characters(value)
-
-    # If the name is what we're looking for, store the value for adding
-    if name == "first":
-        first = int(value)
-    elif name == "second":
-        second = int(value)
-
-# Print the result -- anything printed out goes right to the user. In this
-# case, the output is text. But you can print anything and QuickServ will try and
-# guess the file type.
+# Print the result -- anything printed out goes right to the user. In this case,
+# the output is text. But you can print anything and QuickServ will guess the
+# file type. Even printing the contents of image and video files works.
 print(first + second)
 ```
 
@@ -413,7 +391,8 @@ browser. That's it!
 
 See the examples linked in the next section for more QuickServ demonstrations.
 Read more details in the [How it Works](#how-it-works) section, and in the code
-itself.
+itself. The [Advanced](#advanced) section has additional information about the
+environment QuickServ sets up for executables it runs.
 
 
 # Examples
@@ -590,6 +569,11 @@ program on standard input, and everything printed by the program on standard
 output is used as the response body. Executed programs are neither responsible
 for writing—nor able to write—HTTP response headers. 
 
+All parsed HTTP form variables (if the `Content-Type` is
+`x-www-form-urlencoded`) are also passed as command line arguments when the
+program is executed. This way, the user does not need to parse the variables
+themselves.
+
 Whatever the executed program prints on standard error is logged by QuickServ,
 which means it gets printed in the console window by default. This is handy for
 debugging. If the program terminates with a non-zero exit code, QuickServ
@@ -630,6 +614,8 @@ and they all apply to QuickServ in production.
 
 # Advanced
 
+## Command Line Options
+
 QuickServ has advanced options configured via command line flags. These
 change how and where QuickServ runs, as well as where it saves its output.
 
@@ -648,20 +634,86 @@ Options:
         Use a random port instead of 42069.
 ```
 
+## HTTP Headers & Environment Variables
 
-<!--
-# Motivation & Philosophy
+In imitation of CGI, HTTP headers are passed to the executed program as
+environment variables. A header called `Header-Name` will be set as the
+environment variable `HTTP_HEADER_NAME`. 
 
-The idea came from spending way too much time getting set up during a hackathon
-with friends in college.
+There is also a `REQUEST_TYPE` variable that specifies whether the request was
+`GET`, `POST`, *etc*.
 
-I started this project in C, but I finished it in Golang. It leans heavily on
-the Go standard library. Go's easy web server integration meant that I could
-spend most of my time optimizing the user experience. Thankfully, Go shoulders
-much of the complexity for the end-user.
+## Read From Standard Input
 
-At home, I constantly use it to give my shell scripts simple web front-ends.
--->
+HTTP requests with a body pass the body to the executed program on standard
+input. In most cases, the request body is passed verbatim. This is not the case
+for HTML forms.
+
+HTML form data can either be read from command line arguments, as in the
+tutorial, or parsed from standard input. Variables take the form
+
+```
+name=value&othername=othervalue
+```
+
+The simple addition example from the [tutorial](#tutorial) can be rewritten to
+parse HTTP form values from the standard input instead of from the command line
+arguments.
+
+``` python
+#!python3
+
+import sys
+
+
+# In the form input, "=" and "&" determine where variables start and end. So if
+# they are literally included in the variable name or value, they must be
+# specially decoded. This code replaces every instance of the text on the left
+# with the text on the right to do the decoding:
+#     %3D -> =
+#     %26 -> &
+#     %25 -> %
+#
+# NOTE: Order matters! "%" must be decoded last. If not, it can mess with
+# decoding the others, since their encoded version uses "%"
+def decode_characters(text):
+    text = text.replace("%3D", "=")
+    text = text.replace("%26", "&")
+    text = text.replace("%25", "%")
+    return text
+
+first = second = 0
+
+# Read all of the input into a variable. We are expecting the raw data to look
+# like:
+#       first=123&second=456
+data = sys.stdin.read()
+
+# The raw data looks like the above, so split it into pairs at each "&"
+pairs = data.split("&")
+for pair in pairs:
+    # Each pair looks like the following, so split at each "=":
+    #       name=value
+    name, value = pair.split("=")
+
+    # Decode any special characters (=, &, %) now that we have split the
+    # variables up. This isn't necessary here since we're expecting numbers and
+    # not expecting any of those characters. But it matters a lot when a user
+    # could submit text with those characters
+    name = decode_characters(name)
+    value = decode_characters(value)
+
+    # If the name is what we're looking for, store the value for adding
+    if name == "first":
+        first = int(value)
+    elif name == "second":
+        second = int(value)
+
+# Print the result -- anything printed out goes right to the user. In this
+# case, the output is text. But you can print anything and QuickServ will try and
+# guess the file type.
+print(first + second)
+```
 
 
 # Project Status & Contributing
@@ -717,4 +769,7 @@ This project would not be possible without the help of:
 
 - [Logan Snow](https://github.com/lsnow99)
 - [Amy Liu](https://www.linkedin.com/in/amyjl/)
+- Hacker News user [rchaves](https://news.ycombinator.com/user?id=rchaves), who
+  helpfully [suggested passing parsed form values as command line
+  arguments](https://news.ycombinator.com/item?id=29005407)
 - Everyone who [supports the project](#support-the-project)
