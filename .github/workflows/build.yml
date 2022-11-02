@@ -74,6 +74,7 @@ jobs:
 
           gh release create \
             "${TAG}" \
+            --title "${TAG}" \
             --notes "Pre-compiled binaries for QuickServ ${TAG}" \
             *.exe \
             *.zip \
