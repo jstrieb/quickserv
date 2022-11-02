@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"io/ioutil"
 	"log"
 	"math/big"
 	"net"
@@ -126,9 +125,10 @@ func GetLocalIP() string {
 
 // DecodeForm performs URL query unescaping on encoded form data to make parsing
 // easier. Remaining encoded strings are:
-// 		% -> %25
-// 		& -> %26
-// 		= -> %3D
+//
+//	% -> %25
+//	& -> %26
+//	= -> %3D
 //
 // If "%" is not encoded first in the pre-encoding step, then it will encode the
 // percent signs from the encoding of & and = in addition to real percent signs,
@@ -183,7 +183,7 @@ func IsWSL() bool {
 	}
 
 	for _, filename := range filesToCheck {
-		raw, err := ioutil.ReadFile(filename)
+		raw, err := os.ReadFile(filename)
 		if err == nil && r.Match(raw) {
 			return true
 		}
@@ -267,9 +267,17 @@ func GetShebang(path string) string {
 	return strings.TrimSuffix(strings.TrimPrefix(string(result), "#!"), "\r")
 }
 
-// GetFormAsArguments converts a parsed form such that the variable name=value
-// becomes the following. Names are always preceded by two dashes "--".
-// 		[]string{"--name", "value"}
+// GetFormAsArguments converts a parsed form such that the variables:
+//
+//	name=value
+//	n=val
+//	noval=
+//
+// become the following. Multi-character names are preceded by two dashes "--"
+// while single-character names are preceded by one dash "-". Names with no
+// value are passed literally with no preceding dashes.
+//
+//	[]string{"--name", "value", "-n", "val", "noval"}
 //
 // No guarantees are made about the order of the variables in the resulting
 // slice, except that every name directly precedes its respective value.
@@ -279,9 +287,14 @@ func GetFormAsArguments(form url.Values) []string {
 		if k != "" {
 			for _, v := range vs {
 				if v != "" {
-					result = append(result, "--"+k, v)
+					switch len(k) {
+					case 1:
+						result = append(result, "-"+k, v)
+					default:
+						result = append(result, "--"+k, v)
+					}
 				} else {
-					result = append(result, "--"+k)
+					result = append(result, k)
 				}
 			}
 		} else {
@@ -744,7 +757,7 @@ https://github.com/jstrieb/quickserv`)
 	localIP := GetLocalIP()
 	logger.Println("Starting a server...")
 	fmt.Printf("Visit http://%v:%v to access the server from the local network.\n", localIP, port)
-	fmt.Println("Press Control + C or close this window to stop the server.\n")
+	fmt.Print("Press Control + C or close this window to stop the server.\n\n")
 
 	// Build a handler that decides whether to serve static files or dynamically
 	// execute them
