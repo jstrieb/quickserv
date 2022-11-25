@@ -8,7 +8,9 @@
 # About
 
 QuickServ makes creating web applications [*dangerously*](#disclaimer) easy, no
-matter what programming language you use. QuickServ:
+matter what programming language you use. 
+
+QuickServ is a dependency-free, statically-linked, single-file web server that:
 
 - Has sensible defaults 
 - Prints helpful error messages directly to the console
