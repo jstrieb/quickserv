@@ -352,40 +352,26 @@ important QuickServ features.
 # Each QuickServ script must begin with a line like the one above so that
 # QuickServ knows how to run the file. This line tells QuickServ that I would
 # type `python3 this_file.py` to run this file at the command prompt. For
-# example, if you wanted to do `julia this_file.py` instead, then you would make
-# the first line of `this_file.py` be `#!julia`. 
-# 
-# Since we just want QuickServ to show the HTML code to the user and not run it,
-# index.html does not begin with this. The first line is only required when
+# example, if you wanted to do `julia this_file.py` instead, then you would
+# make the first line of `this_file.py` be `#!julia`.
+#
+# Since we just want QuickServ to show the HTML code to the user and not run
+# it, index.html does not begin with this. The first line is only required when
 # QuickServ has to run the code.
 
-import sys
-
-
-first = second = 0
+import argparse
 
 # All HTML form values get turned into command line arguments. The names are
-# formatted like "--name" and the value comes right after the name. In Python,
-# command line arguments are stored in sys.arv. In our case, if we submit "123"
-# and "456" to the form, sys.argv looks like:
-# 
-# ["index.py", "--first", "123", "--second", "456"]
-# 
-# Loop over the command line arguments to find the HTML form values we want
-for i in range(len(sys.argv) - 1): 
-      name = sys.argv[i] 
-      value = sys.argv[i+1]
+# formatted like "--name" and the value comes right after the name.
+parser = argparse.ArgumentParser()
+parser.add_argument("--first", type=int, required=True)
+parser.add_argument("--second", type=int, required=True)
+args = parser.parse_args()
 
-      # If the name is what we're looking for, store the value for adding
-      if name == "--first":
-            first = int(value)
-      elif name == "--second":
-            second = int(value)
-
-# Print the result -- anything printed out goes right to the user. In this case,
-# the output is text. But you can print anything and QuickServ will guess the
-# file type. Even printing the contents of image and video files works.
-print(first + second)
+# Print the result -- anything printed out goes right to the user. In this
+# case, the output is text. But you can print anything and QuickServ will guess
+# the file type. Even printing the contents of image and video files works.
+print(args.first + args.second)
 ```
 
 Now double click QuickServ in your project folder and try it out in your
